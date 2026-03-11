@@ -1,0 +1,15 @@
+<Solution>
+  <Folder Name="/src/" />
+  <Folder Name="/src/API/">
+    <Project Path="TelzaPortal.API/TelzaPortal.API.csproj" />
+  </Folder>
+  <Folder Name="/src/Core/">
+    <Project Path="TelzaProject.Application/TelzaProject.Application.csproj" />
+    <Project Path="TelzaProject.Domain/TelzaProject.Domain.csproj" />
+  </Folder>
+  <Folder Name="/src/Infrastructure/">
+    <Project Path="TelzaProject.Identity/TelzaProject.Identity.csproj" />
+    <Project Path="TelzaProject.Infrastructure/TelzaProject.Infrastructure.csproj" />
+    <Project Path="TelzaProject.Persistence/TelzaProject.Persistence.csproj" />
+  </Folder>
+</Solution>

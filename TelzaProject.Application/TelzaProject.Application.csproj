@@ -1,0 +1,29 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+	  <ItemGroup>
+    <PackageReference Include="AutoMapper.Extensions.Microsoft.DependencyInjection" Version="8.1.1" />
+    <PackageReference Include="FluentValidation.DependencyInjectionExtensions" Version="10.0.0" />
+    <PackageReference Include="MediatR" Version="13.1.0" />
+  </ItemGroup>	<ItemGroup>
+		<PackageReference Include="AutoMapper.Extensions.Microsoft.DependencyInjection" Version="8.1.1" />
+		<PackageReference Include="FluentValidation.DependencyInjectionExtensions" Version="10.0.0" />
+		<PackageReference Include="MediatR" Version="13.1.0" />
+	
+
+  <ItemGroup>
+    <Folder Include="Constants\" />
+    <Folder Include="Contracts\" />
+    <Folder Include="DTOs\" />
+    <Folder Include="Exceptios\" />
+    <Folder Include="Features\" />
+    <Folder Include="Models\" />
+    <Folder Include="Responses\" />
+    <Folder Include="Profiles\" />
+  </ItemGroup>
+
+</Project>
