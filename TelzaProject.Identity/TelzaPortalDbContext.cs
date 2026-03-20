@@ -1,12 +1,3 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace TelzaProject.Identity
-{
-    internal class TelzaPortalDbContext
-    {
-    }
-}
+﻿// This file is intentionally left empty.
+// The TelzaPortalDbContext is located in TelzaProject.Persistence.
+// Use TelzaProject.Persistence.TelzaPortalDbContext everywhere.
