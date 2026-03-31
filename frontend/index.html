@@ -1,0 +1,740 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Telza Invoice Portal – Modern Invoice Management System">
+    <title>Telza Portal | Invoice Management</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <link rel="stylesheet" href="css/style.css">
+</head>
+
+<body>
+
+    <!-- ══════════════════════════════════════════
+     AUTH PAGE
+══════════════════════════════════════════ -->
+    <div id="auth-screen" class="auth-screen">
+        <div class="auth-bg-art">
+            <div class="art-circle c1"></div>
+            <div class="art-circle c2"></div>
+            <div class="art-circle c3"></div>
+        </div>
+        <div class="auth-card">
+            <div class="auth-brand">
+                <div class="auth-logo-icon">
+                    <i class="fa-solid fa-bolt-lightning"></i>
+                </div>
+                <h2>Telza Portal</h2>
+            </div>
+            <div class="auth-header">
+                <h1>Welcome back</h1>
+                <p>Sign in to manage your invoices</p>
+            </div>
+
+            <div id="auth-alert" class="auth-alert hidden">
+                <i class="fa-solid fa-triangle-exclamation"></i>
+                <span id="auth-alert-text">Invalid email or password</span>
+            </div>
+
+            <form id="login-form" class="auth-form" autocomplete="off">
+                <div class="field-group">
+                    <label for="login-email" class="field-label">Email Address</label>
+                    <div class="field-wrap">
+                        <i class="fa-regular fa-envelope field-icon"></i>
+                        <input type="email" id="login-email" class="field-input" placeholder="admin@telza.com" required
+                            autocomplete="username">
+                    </div>
+                </div>
+                <div class="field-group">
+                    <label for="login-password" class="field-label">Password</label>
+                    <div class="field-wrap">
+                        <i class="fa-solid fa-lock field-icon"></i>
+                        <input type="password" id="login-password" class="field-input" placeholder="••••••••" required
+                            autocomplete="current-password">
+                        <button type="button" class="field-eye" id="toggle-password" tabindex="-1">
+                            <i class="fa-regular fa-eye"></i>
+                        </button>
+                    </div>
+                </div>
+                <button type="submit" class="btn-auth" id="btn-login">
+                    <span class="btn-label">Sign In</span>
+                    <i class="fa-solid fa-spinner fa-spin btn-spinner hidden"></i>
+                </button>
+            </form>
+
+            <p class="auth-hint"><i class="fa-solid fa-circle-info"></i> Use admin@telza.com • Pa$$w0rd</p>
+        </div>
+    </div>
+
+    <!-- ══════════════════════════════════════════
+     MAIN APP SHELL
+══════════════════════════════════════════ -->
+    <div id="app-shell" class="app-shell hidden">
+
+        <!-- SIDEBAR -->
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar-brand">
+                <div class="brand-icon"><i class="fa-solid fa-bolt-lightning"></i></div>
+                <span class="brand-name">Telza</span>
+                <button class="sidebar-close-btn" id="sidebar-close"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+
+            <div class="sidebar-section-label">Overview</div>
+            <nav class="sidebar-nav">
+                <a href="#" class="nav-item active" data-page="dashboard">
+                    <span class="nav-icon"><i class="fa-solid fa-chart-pie"></i></span>
+                    <span class="nav-text">Dashboard</span>
+                    <span class="nav-indicator"></span>
+                </a>
+            </nav>
+
+            <div class="sidebar-section-label">Manage</div>
+            <nav class="sidebar-nav">
+                <a href="#" class="nav-item" data-page="customers">
+                    <span class="nav-icon"><i class="fa-solid fa-users"></i></span>
+                    <span class="nav-text">Customers</span>
+                </a>
+                <a href="#" class="nav-item" data-page="kyc-applications">
+                    <span class="nav-icon"><i class="fa-solid fa-id-card-clip"></i></span>
+                    <span class="nav-text">KYC Applications</span>
+                    <span class="nav-badge" id="badge-kyc">0</span>
+                </a>
+                <a href="#" class="nav-item" data-page="invoices">
+                    <span class="nav-icon"><i class="fa-solid fa-file-invoice-dollar"></i></span>
+                    <span class="nav-text">Invoices</span>
+                    <span class="nav-badge" id="badge-invoices">0</span>
+                </a>
+            </nav>
+
+            <div class="sidebar-section-label">Actions</div>
+            <nav class="sidebar-nav">
+                <a href="#" class="nav-item" data-page="create-invoice">
+                    <span class="nav-icon"><i class="fa-solid fa-plus-circle"></i></span>
+                    <span class="nav-text">Create Invoice</span>
+                </a>
+            </nav>
+
+            <div class="sidebar-footer">
+                <div class="sidebar-user">
+                    <div class="su-avatar" id="sb-avatar">A</div>
+                    <div class="su-info">
+                        <span class="su-name" id="sb-username">Admin</span>
+                        <span class="su-role">Administrator</span>
+                    </div>
+                    <button class="su-logout" id="btn-logout" title="Sign Out">
+                        <i class="fa-solid fa-arrow-right-from-bracket"></i>
+                    </button>
+                </div>
+            </div>
+        </aside>
+
+        <!-- OVERLAY for mobile -->
+        <div class="sidebar-overlay" id="sidebar-overlay"></div>
+
+        <!-- MAIN AREA -->
+        <div class="main-area">
+            <!-- TOP BAR -->
+            <header class="topbar">
+                <div class="topbar-left">
+                    <button class="topbar-hamburger" id="sidebar-open">
+                        <i class="fa-solid fa-bars"></i>
+                    </button>
+                    <div class="topbar-breadcrumb">
+                        <span id="page-heading">Dashboard</span>
+                    </div>
+                </div>
+                <div class="topbar-right">
+                    <div class="topbar-search">
+                        <i class="fa-solid fa-magnifying-glass"></i>
+                        <input type="text" placeholder="Quick search…" id="global-search">
+                    </div>
+                    <div class="topbar-avatar" id="tb-avatar">A</div>
+                </div>
+            </header>
+
+            <!-- PAGE CONTAINER -->
+            <main class="page-body">
+                <!-- TOAST CONTAINER -->
+                <div id="toast-stack" class="toast-stack"></div>
+
+                <!-- ─── DASHBOARD ─── -->
+                <section id="page-dashboard" class="page-section active">
+                    <div class="page-title-row">
+                        <div>
+                            <h1 class="page-title">Dashboard</h1>
+                            <p class="page-subtitle" id="greeting-msg">Good morning, Admin!</p>
+                        </div>
+                        <button class="btn btn-primary" onclick="app.navigate('create-invoice')">
+                            <i class="fa-solid fa-plus"></i> New Invoice
+                        </button>
+                    </div>
+
+                    <!-- KPI CARDS -->
+                    <div class="kpi-grid">
+                        <div class="kpi-card">
+                            <div class="kpi-icon kpi-green"><i class="fa-solid fa-users"></i></div>
+                            <div class="kpi-body">
+                                <span class="kpi-label">Total Customers</span>
+                                <span class="kpi-value" id="kpi-customers">—</span>
+                            </div>
+                            <div class="kpi-trend up"><i class="fa-solid fa-arrow-trend-up"></i></div>
+                        </div>
+                        <div class="kpi-card">
+                            <div class="kpi-icon kpi-purple"><i class="fa-solid fa-id-card-clip"></i></div>
+                            <div class="kpi-body">
+                                <span class="kpi-label">KYC Applications</span>
+                                <span class="kpi-value" id="kpi-kyc">—</span>
+                            </div>
+                            <div class="kpi-trend up"><i class="fa-solid fa-arrow-trend-up"></i></div>
+                        </div>
+                        <div class="kpi-card">
+                            <div class="kpi-icon kpi-emerald"><i class="fa-solid fa-file-invoice-dollar"></i></div>
+                            <div class="kpi-body">
+                                <span class="kpi-label">Total Invoices</span>
+                                <span class="kpi-value" id="kpi-invoices">—</span>
+                            </div>
+                            <div class="kpi-trend up"><i class="fa-solid fa-arrow-trend-up"></i></div>
+                        </div>
+                        <div class="kpi-card">
+                            <div class="kpi-icon kpi-teal"><i class="fa-solid fa-dollar-sign"></i></div>
+                            <div class="kpi-body">
+                                <span class="kpi-label">Total Revenue</span>
+                                <span class="kpi-value" id="kpi-revenue">—</span>
+                            </div>
+                            <div class="kpi-trend up"><i class="fa-solid fa-arrow-trend-up"></i></div>
+                        </div>
+                        <div class="kpi-card">
+                            <div class="kpi-icon kpi-amber"><i class="fa-solid fa-hourglass-half"></i></div>
+                            <div class="kpi-body">
+                                <span class="kpi-label">Pending</span>
+                                <span class="kpi-value" id="kpi-pending">—</span>
+                            </div>
+                            <div class="kpi-trend neutral"><i class="fa-solid fa-minus"></i></div>
+                        </div>
+                    </div>
+
+                    <!-- RECENT TABLE -->
+                    <div class="panel mt-6">
+                        <div class="panel-head">
+                            <h3>Recent Invoices</h3>
+                            <button class="btn btn-ghost" onclick="app.navigate('invoices')">View all <i
+                                    class="fa-solid fa-arrow-right"></i></button>
+                        </div>
+                        <div class="table-wrap">
+                            <table class="data-table" id="dash-inv-table">
+                                <thead>
+                                    <tr>
+                                        <th>Invoice #</th>
+                                        <th>Customer</th>
+                                        <th>Date</th>
+                                        <th>Total</th>
+                                        <th>Status</th>
+                                        <th></th>
+                                    </tr>
+                                </thead>
+                                <tbody id="dash-inv-body">
+                                    <tr>
+                                        <td colspan="6" class="empty-row">
+                                            <div class="empty-state"><i class="fa-solid fa-circle-notch fa-spin"></i>
+                                                Loading…</div>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- ─── CUSTOMERS ─── -->
+                <section id="page-customers" class="page-section">
+                    <div class="page-title-row">
+                        <div>
+                            <h1 class="page-title">Customers</h1>
+                            <p class="page-subtitle">Manage your client directory</p>
+                        </div>
+                        <button class="btn btn-primary" onclick="app.openModal('modal-add-customer')">
+                            <i class="fa-solid fa-plus"></i> Add Customer
+                        </button>
+                    </div>
+
+                    <div class="panel">
+                        <div class="panel-toolbar">
+                            <div class="search-field">
+                                <i class="fa-solid fa-magnifying-glass"></i>
+                                <input type="text" id="search-customers" placeholder="Search by name, email…">
+                            </div>
+                        </div>
+                        <div class="table-wrap">
+                            <table class="data-table">
+                                <thead>
+                                    <tr>
+                                        <th>Name</th>
+                                        <th>Company</th>
+                                        <th>Email</th>
+                                        <th>Phone</th>
+                                        <th>Address</th>
+                                        <th></th>
+                                    </tr>
+                                </thead>
+                                <tbody id="customers-body">
+                                    <tr>
+                                        <td colspan="6" class="empty-row">
+                                            <div class="empty-state"><i class="fa-solid fa-circle-notch fa-spin"></i>
+                                                Loading…</div>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- ─── KYC APPLICATIONS ─── -->
+                <section id="page-kyc-applications" class="page-section">
+                    <div class="page-title-row">
+                        <div>
+                            <h1 class="page-title">KYC Applications</h1>
+                            <p class="page-subtitle">Review submitted onboarding applications</p>
+                        </div>
+                    </div>
+
+                    <div class="panel">
+                        <div class="panel-toolbar">
+                            <div class="search-field">
+                                <i class="fa-solid fa-magnifying-glass"></i>
+                                <input type="text" id="search-kyc" placeholder="Search by company, contact…">
+                            </div>
+                            <div class="filter-pills">
+                                <button class="pill active" data-kycfilter="all">All</button>
+                                <button class="pill" data-kycfilter="Pending">Pending</button>
+                                <button class="pill" data-kycfilter="Approved">Approved</button>
+                                <button class="pill" data-kycfilter="Rejected">Rejected</button>
+                            </div>
+                        </div>
+                        <div class="table-wrap">
+                            <table class="data-table">
+                                <thead>
+                                    <tr>
+                                        <th>Company</th>
+                                        <th>Contact</th>
+                                        <th>Phone</th>
+                                        <th>Email</th>
+                                        <th>Country</th>
+                                        <th>Business Line</th>
+                                        <th>Submitted</th>
+                                        <th>Status</th>
+                                        <th></th>
+                                    </tr>
+                                </thead>
+                                <tbody id="kyc-body">
+                                    <tr>
+                                        <td colspan="9" class="empty-row">
+                                            <div class="empty-state"><i class="fa-solid fa-circle-notch fa-spin"></i>
+                                                Loading…</div>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- ─── INVOICES ─── -->
+                <section id="page-invoices" class="page-section">
+                    <div class="page-title-row">
+                        <div>
+                            <h1 class="page-title">Invoices</h1>
+                            <p class="page-subtitle">Track and manage all invoices</p>
+                        </div>
+                        <button class="btn btn-primary" onclick="app.navigate('create-invoice')">
+                            <i class="fa-solid fa-plus"></i> New Invoice
+                        </button>
+                    </div>
+
+                    <div class="panel">
+                        <div class="panel-toolbar">
+                            <div class="search-field">
+                                <i class="fa-solid fa-magnifying-glass"></i>
+                                <input type="text" id="search-invoices" placeholder="Search invoices…">
+                            </div>
+                            <div class="filter-pills">
+                                <button class="pill active" data-filter="all">All</button>
+                                <button class="pill" data-filter="draft">Draft</button>
+                                <button class="pill" data-filter="pending">Pending</button>
+                                <button class="pill" data-filter="paid">Paid</button>
+                            </div>
+                        </div>
+                        <div class="table-wrap">
+                            <table class="data-table">
+                                <thead>
+                                    <tr>
+                                        <th>Invoice #</th>
+                                        <th>Customer</th>
+                                        <th>Date</th>
+                                        <th>Subtotal</th>
+                                        <th>Tax</th>
+                                        <th>Total</th>
+                                        <th>Status</th>
+                                        <th></th>
+                                    </tr>
+                                </thead>
+                                <tbody id="invoices-body">
+                                    <tr>
+                                        <td colspan="8" class="empty-row">
+                                            <div class="empty-state"><i class="fa-solid fa-circle-notch fa-spin"></i>
+                                                Loading…</div>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- ─── CREATE INVOICE ─── -->
+                <section id="page-create-invoice" class="page-section">
+                    <div class="page-title-row">
+                        <div>
+                            <h1 class="page-title">Create Invoice</h1>
+                            <p class="page-subtitle">Fill in the details to generate a new invoice</p>
+                        </div>
+                    </div>
+
+                    <form id="create-invoice-form">
+                        <div class="inv-layout">
+
+                            <!-- LEFT COLUMN -->
+                            <div class="inv-main">
+                                <!-- Client & Date -->
+                                <div class="panel inv-panel">
+                                    <div class="panel-head">
+                                        <h3><i class="fa-solid fa-user-tie"></i> Client & Date</h3>
+                                    </div>
+                                    <div class="panel-body">
+                                        <div class="form-row-2">
+                                            <div class="field-group">
+                                                <label class="field-label">Select Customer <span
+                                                        class="req">*</span></label>
+                                                <div class="select-wrap">
+                                                    <select id="inv-customer" class="field-input field-select" required>
+                                                        <option value="">— Choose a customer —</option>
+                                                    </select>
+                                                    <i class="fa-solid fa-chevron-down select-arrow"></i>
+                                                </div>
+                                            </div>
+                                            <div class="field-group">
+                                                <label class="field-label">Invoice Date <span
+                                                        class="req">*</span></label>
+                                                <div class="field-wrap">
+                                                    <i class="fa-regular fa-calendar field-icon"></i>
+                                                    <input type="date" id="inv-date" class="field-input" required>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <!-- Customer Info Card (auto-filled) -->
+                                        <div id="customer-info-card" class="customer-info-card hidden">
+                                            <div class="cic-header">
+                                                <div class="cic-avatar" id="cic-avatar">?</div>
+                                                <div class="cic-meta">
+                                                    <div class="cic-name" id="cic-name">—</div>
+                                                    <div class="cic-company" id="cic-company">—</div>
+                                                </div>
+                                            </div>
+                                            <div class="cic-details">
+                                                <div class="cic-row">
+                                                    <i class="fa-regular fa-envelope"></i>
+                                                    <span id="cic-email">—</span>
+                                                </div>
+                                                <div class="cic-row">
+                                                    <i class="fa-solid fa-phone"></i>
+                                                    <span id="cic-phone">—</span>
+                                                </div>
+                                                <div class="cic-row">
+                                                    <i class="fa-solid fa-location-dot"></i>
+                                                    <span id="cic-address">—</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Line Items -->
+                                <div class="panel inv-panel">
+                                    <div class="panel-head">
+                                        <h3><i class="fa-solid fa-list-check"></i> Line Items</h3>
+                                        <button type="button" class="btn btn-ghost-green" id="btn-add-item">
+                                            <i class="fa-solid fa-plus"></i> Add Item
+                                        </button>
+                                    </div>
+                                    <div class="panel-body p-0">
+                                        <div class="items-table-wrap">
+                                            <table class="items-table">
+                                                <thead>
+                                                    <tr>
+                                                        <th class="col-desc">Description</th>
+                                                        <th class="col-qty">Qty</th>
+                                                        <th class="col-price">Unit Price</th>
+                                                        <th class="col-total">Total</th>
+                                                        <th class="col-del"></th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody id="line-items-body"></tbody>
+                                            </table>
+                                        </div>
+                                        <div class="items-empty hidden" id="items-empty">
+                                            <i class="fa-solid fa-box-open"></i>
+                                            <span>No items added yet. Click <strong>Add Item</strong> to start.</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- RIGHT COLUMN -->
+                            <div class="inv-sidebar">
+                                <!-- Summary -->
+                                <div class="panel inv-panel inv-summary-panel">
+                                    <div class="panel-head">
+                                        <h3><i class="fa-solid fa-calculator"></i> Summary</h3>
+                                    </div>
+                                    <div class="panel-body">
+                                        <div class="summary-row">
+                                            <span>Subtotal</span>
+                                            <span id="sum-subtotal">$0.00</span>
+                                        </div>
+                                        <div class="summary-row">
+                                            <label class="summary-label" for="inv-tax-rate">Tax Rate (%)</label>
+                                            <div class="summary-input-wrap">
+                                                <input type="number" id="inv-tax-rate" class="summary-input" value="0"
+                                                    min="0" max="100" step="0.5" placeholder="0">
+                                                <span class="summary-input-suffix">%</span>
+                                            </div>
+                                        </div>
+                                        <div class="summary-row">
+                                            <span>Tax Amount</span>
+                                            <span id="sum-tax">$0.00</span>
+                                        </div>
+                                        <div class="summary-divider"></div>
+                                        <div class="summary-row summary-total">
+                                            <span>Total</span>
+                                            <span id="sum-total">$0.00</span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Status -->
+                                <div class="panel inv-panel">
+                                    <div class="panel-head">
+                                        <h3><i class="fa-solid fa-tag"></i> Status</h3>
+                                    </div>
+                                    <div class="panel-body">
+                                        <div class="select-wrap">
+                                            <select id="inv-status" class="field-input field-select">
+                                                <option value="Draft">Draft</option>
+                                                <option value="Pending">Pending</option>
+                                                <option value="Paid">Paid</option>
+                                            </select>
+                                            <i class="fa-solid fa-chevron-down select-arrow"></i>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Billing Info (auto-filled from customer) -->
+                                <div class="panel inv-panel" id="billing-info-panel">
+                                    <div class="panel-head">
+                                        <h3><i class="fa-solid fa-building-columns"></i> Billing Info</h3>
+                                    </div>
+                                    <div class="panel-body">
+                                        <div class="field-group">
+                                            <label class="field-label">Payment Method</label>
+                                            <div class="field-wrap">
+                                                <i class="fa-solid fa-credit-card field-icon"></i>
+                                                <input type="text" id="inv-payment-method" class="field-input" placeholder="e.g. Bank Transfer">
+                                            </div>
+                                        </div>
+                                        <div class="field-group">
+                                            <label class="field-label">Bank Name</label>
+                                            <div class="field-wrap">
+                                                <i class="fa-solid fa-building-columns field-icon"></i>
+                                                <input type="text" id="inv-bank-name" class="field-input" placeholder="e.g. Chase Bank">
+                                            </div>
+                                        </div>
+                                        <div class="field-group">
+                                            <label class="field-label">Account Name</label>
+                                            <div class="field-wrap">
+                                                <i class="fa-solid fa-user field-icon"></i>
+                                                <input type="text" id="inv-account-name" class="field-input" placeholder="Account holder name">
+                                            </div>
+                                        </div>
+                                        <div class="field-group">
+                                            <label class="field-label">Account Number</label>
+                                            <div class="field-wrap">
+                                                <i class="fa-solid fa-hashtag field-icon"></i>
+                                                <input type="text" id="inv-account-number" class="field-input" placeholder="Account number">
+                                            </div>
+                                        </div>
+                                        <div class="field-group">
+                                            <label class="field-label">Notes</label>
+                                            <textarea id="inv-notes" class="field-input field-textarea" rows="2" placeholder="Additional notes…"></textarea>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Actions -->
+                                <div class="inv-actions">
+                                    <button type="button" class="btn btn-outline w-full" id="btn-preview-invoice">
+                                        <i class="fa-regular fa-eye"></i> Preview
+                                    </button>
+                                    <button type="submit" class="btn btn-primary w-full" id="btn-save-invoice">
+                                        <i class="fa-solid fa-floppy-disk"></i>
+                                        <span class="btn-label">Save Invoice</span>
+                                        <i class="fa-solid fa-spinner fa-spin btn-spinner hidden"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </section>
+
+            </main>
+        </div>
+    </div>
+
+    <!-- ══════════════════════════════════════════
+     MODALS
+══════════════════════════════════════════ -->
+
+    <!-- Add Customer Modal -->
+    <div class="modal-backdrop" id="modal-add-customer">
+        <div class="modal-box">
+            <div class="modal-head">
+                <div class="modal-title-group">
+                    <div class="modal-icon-badge"><i class="fa-solid fa-user-plus"></i></div>
+                    <h3>Add Customer</h3>
+                </div>
+                <button class="modal-close" data-modal="modal-add-customer"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <form id="form-add-customer">
+                <div class="modal-body">
+                    <div class="field-group">
+                        <label class="field-label">Full Name <span class="req">*</span></label>
+                        <div class="field-wrap">
+                            <i class="fa-solid fa-user field-icon"></i>
+                            <input type="text" id="cust-name" class="field-input" placeholder="John Smith" required>
+                        </div>
+                    </div>
+                    <div class="form-row-2">
+                        <div class="field-group">
+                            <label class="field-label">Email</label>
+                            <div class="field-wrap">
+                                <i class="fa-regular fa-envelope field-icon"></i>
+                                <input type="email" id="cust-email" class="field-input" placeholder="john@company.com">
+                            </div>
+                        </div>
+                        <div class="field-group">
+                            <label class="field-label">Phone</label>
+                            <div class="field-wrap">
+                                <i class="fa-solid fa-phone field-icon"></i>
+                                <input type="text" id="cust-phone" class="field-input" placeholder="+1 555 000 0000">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="field-group">
+                        <label class="field-label">Company</label>
+                        <div class="field-wrap">
+                            <i class="fa-solid fa-building field-icon"></i>
+                            <input type="text" id="cust-company" class="field-input" placeholder="Company Inc.">
+                        </div>
+                    </div>
+                    <div class="field-group">
+                        <label class="field-label">Address</label>
+                        <textarea id="cust-address" class="field-input field-textarea"
+                            placeholder="123 Main St, City, Country" rows="2"></textarea>
+                    </div>
+                </div>
+                <div class="modal-foot">
+                    <button type="button" class="btn btn-ghost" data-modal="modal-add-customer">Cancel</button>
+                    <button type="submit" class="btn btn-primary" id="btn-save-customer">
+                        <span class="btn-label">Save Customer</span>
+                        <i class="fa-solid fa-spinner fa-spin btn-spinner hidden"></i>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- KYC Detail Modal -->
+    <div class="modal-backdrop" id="modal-kyc-detail">
+        <div class="modal-box modal-xl">
+            <div class="modal-head">
+                <div class="modal-title-group">
+                    <div class="modal-icon-badge"><i class="fa-solid fa-id-card-clip"></i></div>
+                    <h3>KYC Application Details</h3>
+                </div>
+                <button class="modal-close" data-modal="modal-kyc-detail"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="modal-body" id="kyc-detail-body">
+                <!-- Filled by JS -->
+            </div>
+            <div class="modal-foot">
+                <button type="button" class="btn btn-ghost" data-modal="modal-kyc-detail">Close</button>
+                <button type="button" class="btn btn-primary" id="btn-create-invoice-from-kyc">
+                    <i class="fa-solid fa-file-invoice-dollar"></i> Create Invoice
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Invoice Preview Modal -->
+    <div class="modal-backdrop" id="modal-preview-invoice">
+        <div class="modal-box modal-xl">
+            <div class="modal-head">
+                <div class="modal-title-group">
+                    <div class="modal-icon-badge"><i class="fa-solid fa-eye"></i></div>
+                    <h3>Invoice Preview</h3>
+                </div>
+                <button class="modal-close" data-modal="modal-preview-invoice"><i
+                        class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="modal-body p-0" id="invoice-print-area">
+                <!-- Filled by JS -->
+            </div>
+            <div class="modal-foot print-hide">
+                <button type="button" class="btn btn-ghost" data-modal="modal-preview-invoice">Close</button>
+                <button type="button" class="btn btn-outline" onclick="window.print()">
+                    <i class="fa-solid fa-print"></i> Print
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Delete Confirm Modal -->
+    <div class="modal-backdrop" id="modal-confirm-delete">
+        <div class="modal-box modal-sm">
+            <div class="modal-head">
+                <div class="modal-title-group">
+                    <div class="modal-icon-badge danger"><i class="fa-solid fa-triangle-exclamation"></i></div>
+                    <h3>Confirm Delete</h3>
+                </div>
+                <button class="modal-close" data-modal="modal-confirm-delete"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="modal-body">
+                <p id="confirm-delete-text">Are you sure you want to delete this item? This action cannot be undone.</p>
+            </div>
+            <div class="modal-foot">
+                <button type="button" class="btn btn-ghost" data-modal="modal-confirm-delete">Cancel</button>
+                <button type="button" class="btn btn-danger" id="btn-confirm-delete">Delete</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/app.js"></script>
+</body>
+
+</html>

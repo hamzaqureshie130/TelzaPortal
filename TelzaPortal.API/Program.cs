@@ -48,11 +48,15 @@ builder.Services.AddSwaggerGen(c =>
     });
 });
 
-// ─── CORS (for React frontend) ────────────────────────────────────────────────
+// ─── CORS (allow admin portal + KYC public form from any localhost/127.0.0.1) ──
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("CorsPolicy", policy =>
-        policy.WithOrigins("http://localhost:3000")
+        policy.SetIsOriginAllowed(origin =>
+        {
+            var uri = new Uri(origin);
+            return uri.Host == "127.0.0.1" || uri.Host == "localhost";
+        })
               .AllowAnyMethod()
               .AllowAnyHeader()
               .AllowCredentials());
@@ -72,5 +76,8 @@ app.UseHttpsRedirection();
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
+
+// ─── Seed Database ────────────────────────────────────────────────────────────
+await TelzaProject.Identity.UserSeeder.SeedAdminUser(app.Services);
 
 app.Run();
