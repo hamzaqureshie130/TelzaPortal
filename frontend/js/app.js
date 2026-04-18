@@ -1,10 +1,13 @@
 /**
  * Telza Portal – App Logic
  * Connects to ASP.NET Core REST API
- * API Base: https://localhost:7090/api
  */
 
 // ─── CONFIG ──────────────────────────────────────────────────────────────────
+// Production (same origin as API when deployed — e.g. admin.telza.co)
+// const API = '/api';
+
+// Local — TelzaPortal.API (Properties/launchSettings.json → https://localhost:7090)
 const API = 'https://localhost:7090/api';
 
 // ─── STATE ───────────────────────────────────────────────────────────────────
@@ -19,6 +22,7 @@ const state = {
     kycFilter: 'all',
     deleteCallback: null,
     selectedKyc: null,      // KYC currently viewed in detail modal
+    kycStatusEditId: null,  // KYC id when status modal is open
 };
 
 // ─── TOAST ───────────────────────────────────────────────────────────────────
@@ -77,6 +81,21 @@ const fmt = {
 function statusBadge(status = 'Draft') {
     const map = { Draft: 'badge-draft', Pending: 'badge-pending', Paid: 'badge-paid', Overdue: 'badge-overdue', Approved: 'badge-paid', Rejected: 'badge-overdue' };
     return `<span class="badge ${map[status] || 'badge-draft'}">${status}</span>`;
+}
+
+function kycStatusString(raw) {
+    if (raw === 1 || raw === '1' || raw === 'Pending' || raw === 'pending') return 'Pending';
+    if (raw === 2 || raw === '2' || raw === 'UnderReview' || raw === 'Under Review') return 'Under Review';
+    if (raw === 3 || raw === '3' || raw === 'Approved' || raw === 'approved') return 'Approved';
+    if (raw === 4 || raw === '4' || raw === 'Rejected' || raw === 'rejected') return 'Rejected';
+    if (typeof raw === 'string' && raw.trim()) return raw;
+    return 'Pending';
+}
+
+function kycStatusBadge(raw) {
+    const s = kycStatusString(raw);
+    const map = { Pending: 'badge-pending', 'Under Review': 'badge-draft', Approved: 'badge-paid', Rejected: 'badge-overdue' };
+    return `<span class="badge ${map[s] || 'badge-draft'}">${s}</span>`;
 }
 
 // ─── MODAL CONTROL ────────────────────────────────────────────────────────────
@@ -162,17 +181,67 @@ function populateCustomerDropdown() {
     });
 }
 
-function fillCustomerInfoCard(customerId) {
+function clearInvoiceBillingFields() {
+    ['inv-payment-method', 'inv-bank-name', 'inv-bank-address', 'inv-account-name', 'inv-contact-phone', 'inv-contact-email', 'inv-contact-fax', 'inv-account-number', 'inv-notes'].forEach(id => {
+        const el = $(id);
+        if (el) el.value = '';
+    });
+}
+
+function applyInvoiceBillingFromApi(b) {
+    if (!b) return;
+    const set = (id, v) => { const el = $(id); if (el) el.value = v != null ? String(v) : ''; };
+    set('inv-payment-method', b.paymentMethod);
+    set('inv-bank-name', b.bankName);
+    set('inv-bank-address', b.bankAddress);
+    set('inv-account-name', b.accountName);
+    set('inv-account-number', b.accountNumber);
+    set('inv-contact-phone', b.contactPhone);
+    set('inv-contact-email', b.contactEmail);
+    set('inv-contact-fax', b.contactFax);
+}
+
+async function loadInvoiceBillingForClient(customerId) {
+    clearInvoiceBillingFields();
+    if (!customerId) return;
+    try {
+        const b = await apiFetch(`/clients/${customerId}/invoice-billing`);
+        applyInvoiceBillingFromApi(b);
+    } catch {
+        clearInvoiceBillingFields();
+    }
+}
+
+async function loadInvoiceBillingForKyc(kycId) {
+    clearInvoiceBillingFields();
+    if (!kycId) return;
+    try {
+        const b = await apiFetch(`/kyc/${kycId}/invoice-billing`);
+        applyInvoiceBillingFromApi(b);
+    } catch {
+        clearInvoiceBillingFields();
+    }
+}
+
+function fillCustomerInfoCard(customerId, opts = {}) {
+    const kycId = opts.kycId || null;
     const card = document.getElementById('customer-info-card');
     if (!card) return;
 
     if (!customerId) {
         card.classList.add('hidden');
+        clearInvoiceBillingFields();
+        if (kycId) void loadInvoiceBillingForKyc(kycId);
         return;
     }
 
     const c = state.customers.find(x => x.id == customerId);
-    if (!c) { card.classList.add('hidden'); return; }
+    if (!c) {
+        card.classList.add('hidden');
+        clearInvoiceBillingFields();
+        if (kycId) void loadInvoiceBillingForKyc(kycId);
+        return;
+    }
 
     document.getElementById('cic-avatar').textContent = fmt.initials(c.name);
     document.getElementById('cic-name').textContent = c.name || '—';
@@ -182,22 +251,8 @@ function fillCustomerInfoCard(customerId) {
     document.getElementById('cic-address').textContent = c.address || '—';
 
     card.classList.remove('hidden');
-
-    // Auto-fill billing info from KYC data if available
-    const kyc = state.kycApplications.find(k =>
-        k.companyDetails?.businessContactName === c.name ||
-        k.companyDetails?.voipPortalEmail === c.email ||
-        k.companyDetails?.companyName === c.company
-    );
-
-    if (kyc?.billingInformation) {
-        const b = kyc.billingInformation;
-        safeSet('inv-payment-method', b.paymentMethod);
-        safeSet('inv-bank-name', b.bankName);
-        safeSet('inv-account-name', b.accountName);
-        safeSet('inv-account-number', b.accountNumber);
-        safeSet('inv-notes', b.notes);
-    }
+    if (kycId) void loadInvoiceBillingForKyc(kycId);
+    else void loadInvoiceBillingForClient(customerId);
 }
 
 function safeSet(id, val) {
@@ -282,11 +337,14 @@ function renderKycApplications(filter = '') {
 
     const list = state.kycApplications.filter(k => {
         const cd = k.companyDetails || {};
-        const matchText =
-            (cd.companyName || '').toLowerCase().includes(q) ||
-            (cd.businessContactName || '').toLowerCase().includes(q) ||
-            (cd.voipPortalEmail || '').toLowerCase().includes(q);
-        const matchStatus = statusFilter === 'all' || (k.status || 'Pending') === statusFilter;
+        const statusStr = kycStatusString(k.status);
+        const hay = [
+            cd.companyName, cd.businessContactName, cd.voipPortalEmail, cd.mobileNumber,
+            cd.businessPhone, cd.feinNumber, cd.frnNumber, cd.businessLine, cd.country,
+            k.userId, statusStr,
+        ].filter(Boolean).join(' ').toLowerCase();
+        const matchText = !q || hay.includes(q);
+        const matchStatus = statusFilter === 'all' || statusStr === statusFilter;
         return matchText && matchStatus;
     });
 
@@ -309,9 +367,10 @@ function renderKycApplications(filter = '') {
             <td class="td-secondary">${cd.country || '—'}</td>
             <td class="td-secondary">${cd.businessLine || '—'}</td>
             <td class="td-secondary">${fmt.date(k.createdAt)}</td>
-            <td>${statusBadge(k.status || 'Pending')}</td>
+            <td>${kycStatusBadge(k.status)}</td>
             <td><div class="row-actions">
                 <button class="row-btn" onclick="app.viewKycDetail('${k.id}')" title="View Details"><i class="fa-solid fa-eye"></i></button>
+                <button class="row-btn" onclick="app.openKycStatusModal('${k.id}', ${Number(k.status) || 1})" title="Update status"><i class="fa-solid fa-flag"></i></button>
                 <button class="row-btn" onclick="app.createInvoiceFromKyc('${k.id}')" title="Create Invoice"><i class="fa-solid fa-file-invoice-dollar"></i></button>
             </div></td>
         </tr>`;
@@ -354,7 +413,6 @@ function renderInvoices(filter = '') {
 // ─── INVOICE PREVIEW ─────────────────────────────────────────────────────────
 function buildInvoiceHTML(inv, customer, billingInfo) {
     const items = (inv.items || []);
-    const MIN_ROWS = 8;
 
     const itemRows = items.map((it) => `
         <tr>
@@ -365,9 +423,8 @@ function buildInvoiceHTML(inv, customer, billingInfo) {
             <td style="text-align:right">${fmt.currency(it.total != null ? it.total : it.quantity * it.unitPrice)}</td>
         </tr>`).join('');
 
-    const blankCount = Math.max(0, MIN_ROWS - items.length);
-    const blankRows = Array.from({ length: blankCount })
-        .map(() => `<tr><td>&nbsp;</td><td></td><td></td><td></td><td></td></tr>`).join('');
+    // No filler rows — keeps invoice on one page when printing/PDF
+    const blankRows = '';
 
     const total = inv.total != null ? inv.total : ((inv.subtotal || 0) + (inv.tax || 0));
     const custAddr = [customer?.company, customer?.address].filter(Boolean).join(', ')
@@ -376,7 +433,7 @@ function buildInvoiceHTML(inv, customer, billingInfo) {
     const bi = billingInfo || {};
 
     return `
-    <div class="tpl-invoice">
+    <div class="tpl-invoice tpl-invoice--compact">
 
         <div class="tpl-header-bar">
             <div class="tpl-header-diagonal"></div>
@@ -409,7 +466,11 @@ function buildInvoiceHTML(inv, customer, billingInfo) {
                 <div class="tpl-pay-col">
                     <div class="tpl-pay-line"><span>Payment Method:</span><span>${bi.paymentMethod || $('inv-payment-method')?.value || '—'}</span></div>
                     <div class="tpl-pay-line"><span>Bank Name:</span><span>${bi.bankName || $('inv-bank-name')?.value || '—'}</span></div>
-                    <div class="tpl-pay-line"><span>Account Name:</span><span>${bi.accountName || $('inv-account-name')?.value || '—'}</span></div>
+                    <div class="tpl-pay-line"><span>Bank Address:</span><span>${bi.bankAddress || $('inv-bank-address')?.value || '—'}</span></div>
+                    <div class="tpl-pay-line"><span>Bank Contact Name:</span><span>${bi.accountName || $('inv-account-name')?.value || '—'}</span></div>
+                    <div class="tpl-pay-line"><span>Bank Contact Phone:</span><span>${bi.contactPhone || $('inv-contact-phone')?.value || '—'}</span></div>
+                    <div class="tpl-pay-line"><span>Bank Contact Email:</span><span>${bi.contactEmail || $('inv-contact-email')?.value || '—'}</span></div>
+                    <div class="tpl-pay-line"><span>Contact Fax:</span><span>${bi.contactFax || $('inv-contact-fax')?.value || '—'}</span></div>
                     <div class="tpl-pay-line"><span>Account Number:</span><span>${bi.accountNumber || $('inv-account-number')?.value || '—'}</span></div>
                 </div>
             </div>
@@ -449,68 +510,287 @@ function buildInvoiceHTML(inv, customer, billingInfo) {
 }
 
 // ─── KYC DETAIL HTML ──────────────────────────────────────────────────────────
+function escapeHtml(s) {
+    if (s == null) return '';
+    return String(s)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
+}
+
+function kycDetailRow(label, value) {
+    const v = value == null || value === '' ? '—' : String(value);
+    return `<div class="kyc-detail-row"><span>${escapeHtml(label)}</span><strong>${escapeHtml(v)}</strong></div>`;
+}
+
+function ynLabel(v) {
+    if (v === true) return 'Yes';
+    if (v === false) return 'No';
+    return '—';
+}
+
+function corporateTypeLabel(v) {
+    const m = { 1: 'Sole Proprietorship', 2: 'LLC', 3: 'Corporation', 4: 'Partnership', 5: 'Other', 6: 'Non-Profit' };
+    if (v != null && m[v] != null) return m[v];
+    if (typeof v === 'string' && v.trim()) return v;
+    return '—';
+}
+
+function productTypeLabel(pt) {
+    const m = {
+        1: 'VoIP', 2: 'Dialler Server', 3: 'Inbound DID', 4: 'TFN', 5: 'AI Bots',
+        VOIP: 'VoIP', DiallerServer: 'Dialler Server', InboundDID: 'Inbound DID', TFN: 'TFN', AIBots: 'AI Bots',
+    };
+    if (m[pt] != null) return m[pt];
+    return pt != null && pt !== '' ? String(pt) : '—';
+}
+
+function productDetailParts(p) {
+    const parts = [];
+    if (p.numberOfPorts != null) parts.push(`Ports: ${p.numberOfPorts}`);
+    if (p.numberOfAgents != null) parts.push(`Agents: ${p.numberOfAgents}`);
+    if (p.numberOfDIDs != null) parts.push(`DIDs: ${p.numberOfDIDs}`);
+    if (p.specificAreaCodes) parts.push(`Area codes: ${p.specificAreaCodes}`);
+    if (p.tfnQuantity != null) parts.push(`TFN qty: ${p.tfnQuantity}`);
+    if (p.numberOfBots != null) parts.push(`Bots: ${p.numberOfBots}`);
+    if (p.botServerInformation) parts.push(`Server info: ${p.botServerInformation}`);
+    if (p.closerDiallerDetails) parts.push(`Closer dialler: ${p.closerDiallerDetails}`);
+    return parts.join(' · ');
+}
+
+const BIZ_DESC_LABELS = {
+    carrier: 'Carrier / Service Provider',
+    reseller: 'Reseller',
+    enterprise: 'Enterprise',
+    call_center: 'Call Center / BPO',
+    other: 'Other',
+};
+
+function formatBizDesc(arr) {
+    if (!arr || !arr.length) return '—';
+    return arr.map(k => BIZ_DESC_LABELS[k] || k).join(', ');
+}
+
+function filterKycDetailSections() {
+    const input = $('kyc-detail-search');
+    const body = $('kyc-detail-body');
+    if (!input || !body) return;
+    const q = input.value.trim().toLowerCase();
+    body.querySelectorAll('.kyc-detail-section').forEach(sec => {
+        let visible = 0;
+        sec.querySelectorAll('.kyc-detail-row, .kyc-trade-ref-card, .kyc-product-chip').forEach(el => {
+            const show = !q || el.textContent.toLowerCase().includes(q);
+            el.classList.toggle('kyc-detail-row--hidden', !show);
+            if (show) visible++;
+        });
+        sec.classList.toggle('kyc-detail-section--hidden', visible === 0 && q.length > 0);
+    });
+}
+
 function buildKycDetailHTML(kyc) {
     const cd = kyc.companyDetails || {};
-    const bi = kyc.billingInformation || {};
     const ti = kyc.technicalInformation || {};
     const ps = kyc.productSelections || [];
+    const ox = kyc.onboardingExtensions || null;
+    const bk = ox?.companyBanking || {};
+    const tr = ox?.tradeReferences || [];
+    const reg = ox?.regulatoryCompliance || {};
+    const att = ox?.attestation || {};
+
+    const legacyNotice = !ox
+        ? `<div class="kyc-detail-notice kyc-full-width"><strong>Note:</strong> Banking, trade references, regulatory compliance, and attestation were not stored on this record (submitted before extended snapshot). New applications include full section data.</div>`
+        : '';
+
+    const metaSection = `
+        <div class="kyc-detail-section kyc-full-width">
+            <div class="kyc-section-title"><i class="fa-solid fa-fingerprint"></i> Application</div>
+            <div class="kyc-detail-rows">
+                ${kycDetailRow('Application ID', kyc.id)}
+                ${kycDetailRow('User ID', kyc.userId)}
+                ${kycDetailRow('Status', kycStatusString(kyc.status))}
+                ${kycDetailRow('Submitted', fmt.date(kyc.createdAt))}
+                ${kyc.updatedAt ? kycDetailRow('Last updated', fmt.date(kyc.updatedAt)) : ''}
+            </div>
+        </div>`;
+
+    const companySection = `
+        <div class="kyc-detail-section kyc-full-width">
+            <div class="kyc-section-title"><i class="fa-solid fa-building"></i> Company information</div>
+            <div class="kyc-detail-rows">
+                ${kycDetailRow('Legal company name', cd.companyName)}
+                ${kycDetailRow('Other designated names', cd.otherDesignatedNames)}
+                ${kycDetailRow('Physical address', cd.address)}
+                ${kycDetailRow('City', cd.city)}
+                ${kycDetailRow('State / province', cd.state)}
+                ${kycDetailRow('ZIP / postal', cd.zipCode)}
+                ${kycDetailRow('Country', cd.country)}
+                ${kycDetailRow('Mailing address', cd.mailingAddress)}
+                ${kycDetailRow('Mailing city / state / ZIP', cd.mailingCityStateZip)}
+                ${kycDetailRow('Business based in U.S.', ynLabel(cd.businessBasedInUs))}
+                ${kycDetailRow('State of incorporation', cd.stateOfIncorporation)}
+                ${kycDetailRow('Date of incorporation', cd.dateOfIncorporation ? fmt.date(cd.dateOfIncorporation) : '—')}
+                ${kycDetailRow('Business license #', cd.businessLicenseNumber)}
+                ${kycDetailRow('FEIN', cd.feinNumber)}
+                ${kycDetailRow('FRN', cd.frnNumber)}
+                ${kycDetailRow('Corporate type', corporateTypeLabel(cd.corporateType))}
+                ${kycDetailRow('Business line', cd.businessLine)}
+                ${kycDetailRow('Mobile', cd.mobileNumber)}
+                ${kycDetailRow('Teams / WhatsApp', cd.teamsOrWhatsApp)}
+                ${kycDetailRow('499 Filer ID', cd.filerID499)}
+                ${kycDetailRow('Business contact name', cd.businessContactName)}
+                ${kycDetailRow('Business phone', cd.businessPhone)}
+                ${kycDetailRow('Mobile (separate)', cd.mobilePhoneSeparate)}
+                ${kycDetailRow('VoIP portal email', cd.voipPortalEmail)}
+                ${kycDetailRow('Email for rates', cd.emailForRates)}
+                ${kycDetailRow('Email for notices', cd.emailForNotices)}
+                ${kycDetailRow('Email for balances', cd.emailForBalances)}
+                ${kycDetailRow('Primary main email', cd.primaryMainEmail)}
+                ${kycDetailRow('Billing / accounting email', cd.billingAccountingEmail)}
+                ${kycDetailRow('Support / NOC email', cd.supportNocEmail)}
+                ${kycDetailRow('Legal email', cd.legalEmail)}
+                ${kycDetailRow('Compliance email', cd.complianceEmail)}
+                ${kycDetailRow('Fraud report email', cd.fraudReportEmail)}
+                ${kycDetailRow('Customer main phone', cd.customerMainPhone)}
+                ${kycDetailRow('Customer fax', cd.customerFax)}
+                ${kycDetailRow('Customer URL', cd.customerUrl)}
+                ${kycDetailRow('Company contact name', cd.companyContactName)}
+                ${kycDetailRow('Skype ID', cd.skypeId)}
+            </div>
+        </div>`;
+
+    let bankingSection = '';
+    if (ox) {
+        bankingSection = `
+        <div class="kyc-detail-section kyc-full-width">
+            <div class="kyc-section-title"><i class="fa-solid fa-building-columns"></i> Banking (U.S. account)</div>
+            <div class="kyc-detail-rows">
+                ${kycDetailRow('Has U.S. bank account', ynLabel(bk.hasUsBankAccount))}
+                ${bk.hasUsBankAccount ? `
+                ${kycDetailRow('Bank name', bk.bankName)}
+                ${kycDetailRow('Bank address', bk.bankAddress)}
+                ${kycDetailRow('Contact name', bk.contactName)}
+                ${kycDetailRow('Contact phone', bk.contactPhone)}
+                ${kycDetailRow('Contact email', bk.contactEmail)}
+                ${kycDetailRow('Contact fax', bk.contactFax)}
+                ${kycDetailRow('Account number', bk.accountNumber)}
+                ` : ''}
+            </div>
+        </div>`;
+    }
+
+    let tradeSection = '';
+    if (ox && tr.length) {
+        tradeSection = `
+        <div class="kyc-detail-section kyc-full-width">
+            <div class="kyc-section-title"><i class="fa-solid fa-handshake"></i> Trade references</div>
+            ${tr.map((r, i) => `
+            <div class="kyc-trade-ref-card">
+                <div class="kyc-trade-ref-title">Reference ${i + 1}</div>
+                <div class="kyc-detail-rows">
+                    ${kycDetailRow('Name', r.tradeReferenceName)}
+                    ${kycDetailRow('Number', r.tradeReferenceNumber)}
+                    ${kycDetailRow('Address', r.tradeReferenceAddress)}
+                    ${kycDetailRow('Contact name', r.contactName)}
+                    ${kycDetailRow('Contact email', r.contactEmail)}
+                    ${kycDetailRow('Contact phone', r.contactPhone)}
+                </div>
+            </div>`).join('')}
+        </div>`;
+    }
+
+    const regBoolRows = ox ? [
+        ['robocallMitigationRegistered', 'Registered with RoboCall Mitigation Database'],
+        ['stirShakenRmdImplemented', 'STIR/SHAKEN & RMD plan implemented'],
+        ['signingAllCalls', 'Signing and attesting ALL calls'],
+        ['complianceUsBankAccount', 'U.S. bank account (compliance)'],
+        ['originateConversationalTraffic', 'Originate / process conversational traffic'],
+        ['originateAutodialedTraffic', 'Originate / process autodialed traffic'],
+        ['directAutodialClients', 'Direct autodial clients'],
+        ['nonUsAutodialSources', 'Autodialed traffic from non-U.S. sources'],
+        ['itgTracingEngaged', 'Engaged in ITG tracing'],
+        ['moreThanThreeTracebacksLastYear', '&gt;3 tracebacks in last year'],
+        ['moreThanFourGovImpersonationTracebacks', '&gt;4 gov. impersonation tracebacks'],
+        ['nonCooperativeVspByUsTelecom', 'Non-cooperative VSP (US Telecom)'],
+        ['blockedFromNetworkLastTwoYears', 'Blocked/removed from another network (2 yrs)'],
+        ['adverseJudgementUnlawfulRobocalls', 'Adverse judgement (unlawful robocalls)'],
+    ].map(([key, label]) => kycDetailRow(label, ynLabel(reg[key]))).join('') : '';
+
+    let regulatorySection = '';
+    if (ox) {
+        regulatorySection = `
+        <div class="kyc-detail-section kyc-full-width">
+            <div class="kyc-section-title"><i class="fa-solid fa-scale-balanced"></i> Regulatory &amp; compliance</div>
+            <div class="kyc-detail-rows">
+                ${kycDetailRow('Business descriptions', formatBizDesc(reg.businessDescriptions))}
+                ${kycDetailRow('Other description', reg.businessDescriptionOtherText)}
+                ${kycDetailRow('Intermediate Provider Registry company', reg.intermediateProviderRegistryCompanyName)}
+                ${kycDetailRow('STIR/SHAKEN certificate company', reg.stirShakenCertCompanyName)}
+                ${kycDetailRow('OCN (STIR/SHAKEN header)', reg.ocnStirShakenHeader)}
+                ${kycDetailRow('FCC 499 Filer ID', reg.fcc499FilerId)}
+                ${kycDetailRow('RoboCall Mitigation listed company', reg.robocallMitigationListedCompanyName)}
+                ${kycDetailRow('RoboCall Mitigation database #', reg.robocallMitigationDatabaseNumber)}
+                ${regBoolRows}
+                ${kycDetailRow('Estimated ASR %', reg.estimatedAsrPercent != null ? String(reg.estimatedAsrPercent) : '—')}
+                ${kycDetailRow('Estimated ALOC (sec)', reg.estimatedAloc != null ? String(reg.estimatedAloc) : '—')}
+                ${kycDetailRow('Unallocated 404 %', reg.estimatedUnallocated404Percent != null ? String(reg.estimatedUnallocated404Percent) : '—')}
+                ${kycDetailRow('Cancel / 487 %', reg.estimatedCancel487Percent != null ? String(reg.estimatedCancel487Percent) : '—')}
+                ${kycDetailRow('Short duration %', reg.estimatedShortDurationPercent != null ? String(reg.estimatedShortDurationPercent) : '—')}
+            </div>
+        </div>`;
+    }
+
+    const productsSection = ps.length ? `
+        <div class="kyc-detail-section kyc-full-width">
+            <div class="kyc-section-title"><i class="fa-solid fa-boxes-stacked"></i> Product selections</div>
+            <div class="kyc-products-grid">
+                ${ps.map(p => {
+        const title = productTypeLabel(p.productType);
+        const sub = productDetailParts(p);
+        return `
+                <div class="kyc-product-chip">
+                    <i class="fa-solid fa-check-circle"></i>
+                    <span>${escapeHtml(title)}</span>
+                    ${sub ? `<small>${escapeHtml(sub)}</small>` : ''}
+                </div>`;
+    }).join('')}
+            </div>
+        </div>` : '';
+
+    const techSection = `
+        <div class="kyc-detail-section kyc-full-width">
+            <div class="kyc-section-title"><i class="fa-solid fa-server"></i> Technical information</div>
+            <div class="kyc-detail-rows">
+                ${kycDetailRow('Dialler server link', ti.diallerServerLink || '—')}
+                ${kycDetailRow('Validation link', ti.validationLink || '—')}
+                ${ti.serverIPs ? `<div class="kyc-detail-row"><span>Server IPs</span><strong class="kyc-detail-multiline">${escapeHtml(ti.serverIPs)}</strong></div>` : kycDetailRow('Server IPs', '—')}
+                ${ti.diallerLevel9AccessDetails ? `<div class="kyc-detail-row"><span>Dialler level 9 / access</span><strong class="kyc-detail-multiline">${escapeHtml(ti.diallerLevel9AccessDetails)}</strong></div>` : kycDetailRow('Dialler level 9 / access', '—')}
+            </div>
+        </div>`;
+
+    let attestationSection = '';
+    if (ox) {
+        attestationSection = `
+        <div class="kyc-detail-section kyc-full-width">
+            <div class="kyc-section-title"><i class="fa-solid fa-pen-to-square"></i> Attestation</div>
+            <div class="kyc-detail-rows">
+                ${kycDetailRow('Officer name', att.officerName)}
+                ${kycDetailRow('Typed signature', att.signatureText)}
+            </div>
+        </div>`;
+    }
 
     return `
     <div class="kyc-detail-grid">
-        <div class="kyc-detail-section">
-            <div class="kyc-section-title"><i class="fa-solid fa-building"></i> Company Details</div>
-            <div class="kyc-detail-rows">
-                <div class="kyc-detail-row"><span>Company Name</span><strong>${cd.companyName || '—'}</strong></div>
-                <div class="kyc-detail-row"><span>Business Contact</span><strong>${cd.businessContactName || '—'}</strong></div>
-                <div class="kyc-detail-row"><span>Email (VoIP)</span><strong>${cd.voipPortalEmail || '—'}</strong></div>
-                <div class="kyc-detail-row"><span>Mobile</span><strong>${cd.mobileNumber || '—'}</strong></div>
-                <div class="kyc-detail-row"><span>WhatsApp/Teams</span><strong>${cd.teamsOrWhatsApp || '—'}</strong></div>
-                <div class="kyc-detail-row"><span>Corporate Type</span><strong>${cd.corporateType || '—'}</strong></div>
-                <div class="kyc-detail-row"><span>Business Line</span><strong>${cd.businessLine || '—'}</strong></div>
-                <div class="kyc-detail-row"><span>499 Filer ID</span><strong>${cd.filerID499 || '—'}</strong></div>
-                <div class="kyc-detail-row"><span>Address</span><strong>${[cd.address, cd.city, cd.state, cd.zipCode, cd.country].filter(Boolean).join(', ') || '—'}</strong></div>
-            </div>
-        </div>
-
-        <div class="kyc-detail-section">
-            <div class="kyc-section-title"><i class="fa-solid fa-building-columns"></i> Billing Information</div>
-            <div class="kyc-detail-rows">
-                <div class="kyc-detail-row"><span>Billing Contact</span><strong>${bi.billingContactName || '—'}</strong></div>
-                <div class="kyc-detail-row"><span>Billing Email</span><strong>${bi.billingEmail || '—'}</strong></div>
-                <div class="kyc-detail-row"><span>Payment Method</span><strong>${bi.paymentMethod || '—'}</strong></div>
-                <div class="kyc-detail-row"><span>Bank Name</span><strong>${bi.bankName || '—'}</strong></div>
-                <div class="kyc-detail-row"><span>Account Name</span><strong>${bi.accountName || '—'}</strong></div>
-                <div class="kyc-detail-row"><span>Account Number</span><strong>${bi.accountNumber || '—'}</strong></div>
-                <div class="kyc-detail-row"><span>Routing Number</span><strong>${bi.routingNumber || '—'}</strong></div>
-                <div class="kyc-detail-row"><span>Billing Address</span><strong>${[bi.billingAddress, bi.billingCity, bi.billingState, bi.billingZipCode, bi.billingCountry].filter(Boolean).join(', ') || '—'}</strong></div>
-            </div>
-        </div>
-
-        ${ps.length > 0 ? `
-        <div class="kyc-detail-section kyc-full-width">
-            <div class="kyc-section-title"><i class="fa-solid fa-boxes-stacked"></i> Product Selections</div>
-            <div class="kyc-products-grid">
-                ${ps.map(p => `
-                <div class="kyc-product-chip">
-                    <i class="fa-solid fa-check-circle"></i>
-                    <span>${p.productType || p.productType}</span>
-                    ${p.numberOfPorts ? `<small>Ports: ${p.numberOfPorts}</small>` : ''}
-                    ${p.numberOfAgents ? `<small>Agents: ${p.numberOfAgents}</small>` : ''}
-                    ${p.numberOfDIDs ? `<small>DIDs: ${p.numberOfDIDs}</small>` : ''}
-                </div>`).join('')}
-            </div>
-        </div>` : ''}
-
-        ${(ti.diallerServerLink || ti.serverIPs) ? `
-        <div class="kyc-detail-section kyc-full-width">
-            <div class="kyc-section-title"><i class="fa-solid fa-server"></i> Technical Information</div>
-            <div class="kyc-detail-rows">
-                ${ti.diallerServerLink ? `<div class="kyc-detail-row"><span>Dialler Server Link</span><strong>${ti.diallerServerLink}</strong></div>` : ''}
-                ${ti.validationLink ? `<div class="kyc-detail-row"><span>Validation Link</span><strong>${ti.validationLink}</strong></div>` : ''}
-                ${ti.serverIPs ? `<div class="kyc-detail-row"><span>Server IPs</span><strong>${ti.serverIPs}</strong></div>` : ''}
-                <div class="kyc-detail-row"><span>Dialler Level 9 Access</span><strong>${ti.diallerLevel9Access ? 'Yes' : 'No'}</strong></div>
-            </div>
-        </div>` : ''}
+        ${legacyNotice}
+        ${metaSection}
+        ${companySection}
+        ${bankingSection}
+        ${tradeSection}
+        ${regulatorySection}
+        ${productsSection}
+        ${techSection}
+        ${attestationSection}
     </div>`;
 }
 
@@ -580,6 +860,20 @@ const app = {
         $('create-invoice-form').addEventListener('submit', app.handleCreateInvoice);
         $('btn-add-item').addEventListener('click', () => addLineItem());
         $('btn-preview-invoice').addEventListener('click', app.previewFromForm);
+        window.addEventListener('beforeprint', () => {
+            if ($('modal-preview-invoice')?.classList.contains('open')) {
+                document.documentElement.classList.add('print-invoice-preview');
+            }
+        });
+        window.addEventListener('afterprint', () => {
+            document.documentElement.classList.remove('print-invoice-preview');
+        });
+        $('btn-print-invoice')?.addEventListener('click', () => {
+            if ($('modal-preview-invoice')?.classList.contains('open')) {
+                document.documentElement.classList.add('print-invoice-preview');
+            }
+            requestAnimationFrame(() => window.print());
+        });
         $('inv-tax-rate').addEventListener('input', recalcInvoice);
 
         // Customer select → auto-fill
@@ -632,6 +926,10 @@ const app = {
                 app.createInvoiceFromKyc(state.selectedKyc.id);
             }
         });
+
+        $('kyc-detail-search')?.addEventListener('input', () => filterKycDetailSections());
+
+        $('btn-kyc-status-save')?.addEventListener('click', () => { void app.saveKycStatus(); });
 
         // Check auth
         if (state.token) {
@@ -744,7 +1042,12 @@ const app = {
         if (page === 'customers') renderCustomers();
         if (page === 'kyc-applications') renderKycApplications();
         if (page === 'invoices') renderInvoices();
-        if (page === 'create-invoice') populateCustomerDropdown();
+        if (page === 'create-invoice') {
+            populateCustomerDropdown();
+            const invSel = $('inv-customer');
+            if (invSel?.value) fillCustomerInfoCard(invSel.value);
+            else fillCustomerInfoCard(null);
+        }
     },
 
     openModal,
@@ -831,8 +1134,6 @@ const app = {
             $('items-empty').classList.add('hidden');
             recalcInvoice();
             fillCustomerInfoCard(null);
-            // Clear billing fields
-            ['inv-payment-method', 'inv-bank-name', 'inv-account-name', 'inv-account-number', 'inv-notes'].forEach(id => { const el = $(id); if (el) el.value = ''; });
             app.navigate('invoices');
         } catch (err) {
             toast(err.message, 'err');
@@ -853,7 +1154,7 @@ const app = {
                 k.companyDetails?.voipPortalEmail === cust?.email ||
                 k.companyDetails?.companyName === cust?.company
             );
-            $('invoice-print-area').innerHTML = buildInvoiceHTML(inv, cust, kyc?.billingInformation);
+            $('invoice-print-area').innerHTML = buildInvoiceHTML(inv, cust, null);
             openModal('modal-preview-invoice');
         } catch (err) {
             toast('Unable to load invoice: ' + err.message, 'err');
@@ -883,8 +1184,12 @@ const app = {
         const billingInfo = {
             paymentMethod: $('inv-payment-method')?.value || '',
             bankName: $('inv-bank-name')?.value || '',
+            bankAddress: $('inv-bank-address')?.value || '',
             accountName: $('inv-account-name')?.value || '',
             accountNumber: $('inv-account-number')?.value || '',
+            contactPhone: $('inv-contact-phone')?.value || '',
+            contactEmail: $('inv-contact-email')?.value || '',
+            contactFax: $('inv-contact-fax')?.value || '',
         };
 
         $('invoice-print-area').innerHTML = buildInvoiceHTML(inv, cust, billingInfo);
@@ -894,15 +1199,48 @@ const app = {
     // ─── View KYC Detail ──────────────────────────────────────────────────
     async viewKycDetail(id) {
         try {
-            let kyc = state.kycApplications.find(k => k.id == id);
-            if (!kyc?.companyDetails) {
-                kyc = await apiFetch(`/kyc/${id}`);
-            }
+            const kyc = await apiFetch(`/kyc/${id}`);
             state.selectedKyc = kyc;
+            const idx = state.kycApplications.findIndex(k => k.id == id);
+            if (idx >= 0) state.kycApplications[idx] = kyc;
+            const searchEl = $('kyc-detail-search');
+            if (searchEl) searchEl.value = '';
             $('kyc-detail-body').innerHTML = buildKycDetailHTML(kyc);
+            filterKycDetailSections();
             openModal('modal-kyc-detail');
         } catch (err) {
             toast('Unable to load KYC details: ' + err.message, 'err');
+        }
+    },
+
+    openKycStatusModal(id, currentStatus) {
+        state.kycStatusEditId = id;
+        const idEl = $('kyc-status-application-id');
+        if (idEl) idEl.textContent = id;
+        const sel = $('kyc-status-select');
+        if (sel) sel.value = String(Number(currentStatus) || 1);
+        openModal('modal-kyc-status');
+    },
+
+    async saveKycStatus() {
+        const id = state.kycStatusEditId;
+        if (!id) return;
+        const sel = $('kyc-status-select');
+        const status = sel ? parseInt(sel.value, 10) : 1;
+        try {
+            const updated = await apiFetch(`/kyc/${id}/status`, {
+                method: 'PATCH',
+                body: JSON.stringify({ status }),
+            });
+            const idx = state.kycApplications.findIndex(k => k.id == id);
+            if (idx >= 0) state.kycApplications[idx] = updated;
+            if (state.selectedKyc && state.selectedKyc.id == id) state.selectedKyc = updated;
+            closeModal('modal-kyc-status');
+            state.kycStatusEditId = null;
+            renderKycApplications($('search-kyc').value);
+            toast('KYC status updated.', 'ok');
+        } catch (err) {
+            toast(err.message || 'Update failed', 'err');
         }
     },
 
@@ -912,31 +1250,31 @@ const app = {
         if (!kyc) return;
 
         const cd = kyc.companyDetails || {};
-        const bi = kyc.billingInformation || {};
+        const norm = (s) => (s || '').trim().toLowerCase();
+        const em = norm(cd.voipPortalEmail);
+        const pm = norm(cd.primaryMainEmail);
+        const ba = norm(cd.billingAccountingEmail);
 
-        // Find matching customer
-        const cust = state.customers.find(c =>
-            c.email === cd.voipPortalEmail ||
-            c.company === cd.companyName ||
-            c.name === cd.businessContactName
-        );
+        const cust = state.customers.find(c => {
+            const ce = norm(c.email);
+            const emailHit = ce && (ce === em || ce === pm || ce === ba);
+            const companyHit = c.company && cd.companyName && norm(c.company) === norm(cd.companyName);
+            const nameHit = c.name && cd.businessContactName && norm(c.name) === norm(cd.businessContactName);
+            return emailHit || companyHit || nameHit;
+        });
 
         app.navigate('create-invoice');
 
         setTimeout(() => {
-            if (cust) {
-                const sel = $('inv-customer');
-                if (sel) sel.value = cust.id;
-                fillCustomerInfoCard(cust.id);
+            const sel = $('inv-customer');
+            if (cust && sel) {
+                sel.value = cust.id;
+                fillCustomerInfoCard(cust.id, { kycId });
+            } else {
+                if (sel) sel.value = '';
+                fillCustomerInfoCard(null, { kycId });
             }
-            // Auto-fill billing
-            safeSet('inv-payment-method', bi.paymentMethod);
-            safeSet('inv-bank-name', bi.bankName);
-            safeSet('inv-account-name', bi.accountName);
-            safeSet('inv-account-number', bi.accountNumber);
-            safeSet('inv-notes', bi.notes);
-
-            toast('Customer & billing info auto-filled from KYC!', 'info');
+            toast(cust ? 'Customer and billing loaded from KYC.' : 'Select a customer — billing pre-filled from this KYC.', 'info');
         }, 100);
     },
 

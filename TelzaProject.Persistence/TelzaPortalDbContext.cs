@@ -1,10 +1,11 @@
-﻿using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using TelzaProject.Domain.Entities;
+using TelzaProject.Persistence.Identity;
 
 namespace TelzaProject.Persistence
 {
-    public class TelzaPortalDbContext : IdentityDbContext
+    public class TelzaPortalDbContext : IdentityDbContext<ApplicationUser>
     {
         public TelzaPortalDbContext(DbContextOptions<TelzaPortalDbContext> options)
             : base(options) { }
@@ -13,9 +14,15 @@ namespace TelzaProject.Persistence
         public DbSet<Invoice> Invoices { get; set; }
         public DbSet<InvoiceItem> InvoiceItems { get; set; }
 
+        public DbSet<Company> Companies { get; set; }
+        public DbSet<BankingInfo> BankingInfos { get; set; }
+        public DbSet<TradeReference> TradeReferences { get; set; }
+        public DbSet<RegulatoryCompliance> RegulatoryCompliances { get; set; }
+        public DbSet<ProductOrder> ProductOrders { get; set; }
+        public DbSet<CompanyTechnicalInfo> CompanyTechnicalInfos { get; set; }
+        public DbSet<CompanyAttestation> CompanyAttestations { get; set; }
         public DbSet<KycApplication> KycApplications { get; set; }
         public DbSet<CompanyDetails> CompanyDetails { get; set; }
-        public DbSet<BillingInformation> BillingInformation { get; set; }
         public DbSet<ProductSelection> ProductSelections { get; set; }
         public DbSet<TechnicalInformation> TechnicalInformation { get; set; }
 

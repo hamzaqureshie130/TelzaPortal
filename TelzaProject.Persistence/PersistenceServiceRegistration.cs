@@ -1,8 +1,9 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using TelzaProject.Application.Contracts;
 using TelzaProject.Persistence.Repositories;
+using TelzaProject.Persistence.Services;
 
 namespace TelzaProject.Persistence
 {
@@ -19,6 +20,9 @@ namespace TelzaProject.Persistence
             services.AddScoped<IInvoiceRepository, InvoiceRepository>();
             services.AddScoped<IInvoiceItemRepository, InvoiceItemRepository>();
             services.AddScoped<IKycRepository, KycRepository>();
+            services.AddScoped<IUserCompanyLinkService, UserCompanyLinkService>();
+            services.AddScoped<ICompanyOnboardingPersistenceService, CompanyOnboardingPersistenceService>();
+            services.AddScoped<IClientInvoiceBillingService, ClientInvoiceBillingService>();
 
             return services;
         }

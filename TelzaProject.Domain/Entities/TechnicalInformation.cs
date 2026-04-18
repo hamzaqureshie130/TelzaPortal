@@ -11,7 +11,7 @@ namespace TelzaProject.Domain.Entities
 
         public string? ValidationLink { get; set; }
         public string? ServerIPs { get; set; }
-        public bool DiallerLevel9Access { get; set; }
+        public string DiallerLevel9AccessDetails { get; set; } = string.Empty;
 
         public KycApplication KycApplication { get; set; } = null!;
     }

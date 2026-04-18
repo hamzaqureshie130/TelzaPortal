@@ -52,7 +52,8 @@ namespace TelzaProject.Application.Profiles
 
             // ─── KYC Application ──────────────────────────────────────────────
             CreateMap<KycApplication, KycApplicationDto>()
-                .ForMember(d => d.ProductSelections, opt => opt.MapFrom(s => s.ProductSelections));
+                .ForMember(d => d.ProductSelections, opt => opt.MapFrom(s => s.ProductSelections))
+                .ForMember(d => d.OnboardingExtensions, opt => opt.Ignore()); // set only in GetKycApplicationDetails (from JSON)
 
             // CompanyDetails
             CreateMap<CompanyDetails, CompanyDetailsDto>().ReverseMap()
@@ -60,11 +61,9 @@ namespace TelzaProject.Application.Profiles
                 .ForMember(d => d.KycApplication, opt => opt.Ignore())
                 .ForMember(d => d.KycApplicationId, opt => opt.Ignore());
 
-            // BillingInformation
-            CreateMap<BillingInformation, BillingInformationDto>().ReverseMap()
-                .ForMember(d => d.Id, opt => opt.MapFrom(_ => Guid.NewGuid()))
-                .ForMember(d => d.KycApplication, opt => opt.Ignore())
-                .ForMember(d => d.KycApplicationId, opt => opt.Ignore());
+            CreateMap<CompanyDetailsDto, Company>()
+                .ForMember(d => d.Id, opt => opt.Ignore());
+            CreateMap<Company, CompanyDetailsDto>();
 
             // TechnicalInformation
             CreateMap<TechnicalInformation, TechnicalInformationDto>().ReverseMap()

@@ -5,6 +5,7 @@ using TelzaProject.Application.Features.Clients.Commands.CreateClient;
 using TelzaProject.Application.Features.Clients.Commands.DeleteClient;
 using TelzaProject.Application.Features.Clients.Commands.UpdateClient;
 using TelzaProject.Application.Features.Clients.Queries.GetClientDetails;
+using TelzaProject.Application.Features.Clients.Queries.GetClientInvoiceBilling;
 using TelzaProject.Application.Features.Clients.Queries.GetClients;
 
 namespace TelzaPortal.API.Controllers
@@ -25,6 +26,11 @@ namespace TelzaPortal.API.Controllers
         [HttpGet]
         public async Task<IActionResult> GetAll() =>
             Ok(await _mediator.Send(new GetClientsQuery()));
+
+        /// <summary>Banking fields to prefill create-invoice (from company / KYC snapshot).</summary>
+        [HttpGet("{id:guid}/invoice-billing")]
+        public async Task<IActionResult> GetInvoiceBilling(Guid id) =>
+            Ok(await _mediator.Send(new GetClientInvoiceBillingQuery { ClientId = id }));
 
         /// <summary>Get a client by ID.</summary>
         [HttpGet("{id:guid}")]

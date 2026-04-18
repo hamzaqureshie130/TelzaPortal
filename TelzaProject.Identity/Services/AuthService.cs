@@ -8,15 +8,16 @@ using TelzaProject.Application.Contracts;
 using TelzaProject.Application.DTOs.Auth;
 using TelzaProject.Application.Exceptions;
 using TelzaProject.Identity.Models;
+using TelzaProject.Persistence.Identity;
 
 namespace TelzaProject.Identity.Services
 {
     public class AuthService : IAuthService
     {
-        private readonly UserManager<IdentityUser> _userManager;
+        private readonly UserManager<ApplicationUser> _userManager;
         private readonly JwtSettings _jwtSettings;
 
-        public AuthService(UserManager<IdentityUser> userManager, IOptions<JwtSettings> jwtSettings)
+        public AuthService(UserManager<ApplicationUser> userManager, IOptions<JwtSettings> jwtSettings)
         {
             _userManager = userManager;
             _jwtSettings = jwtSettings.Value;
@@ -51,7 +52,7 @@ namespace TelzaProject.Identity.Services
             if (userExists != null)
                 throw new BadRequestException("User with this email already exists.");
 
-            var user = new IdentityUser
+            var user = new ApplicationUser
             {
                 Email = registerDto.Email,
                 UserName = registerDto.UserName ?? registerDto.Email,
@@ -81,7 +82,7 @@ namespace TelzaProject.Identity.Services
             };
         }
 
-        private string GenerateJwtToken(IdentityUser user, IList<string> roles)
+        private string GenerateJwtToken(ApplicationUser user, IList<string> roles)
         {
             var claims = new List<Claim>
             {

@@ -13,15 +13,11 @@ namespace TelzaProject.Persistence.Configurations
             builder.Property(k => k.UserId).IsRequired().HasMaxLength(450);
             builder.Property(k => k.Status).HasConversion<int>();
             builder.Property(k => k.CreatedAt).HasDefaultValueSql("GETUTCDATE()");
+            builder.Property(k => k.OnboardingExtensionsJson).HasColumnType("nvarchar(max)");
 
             builder.HasOne(k => k.CompanyDetails)
                    .WithOne(c => c.KycApplication)
                    .HasForeignKey<CompanyDetails>(c => c.KycApplicationId)
-                   .OnDelete(DeleteBehavior.Cascade);
-
-            builder.HasOne(k => k.BillingInformation)
-                   .WithOne(b => b.KycApplication)
-                   .HasForeignKey<BillingInformation>(b => b.KycApplicationId)
                    .OnDelete(DeleteBehavior.Cascade);
 
             builder.HasOne(k => k.TechnicalInformation)
@@ -43,39 +39,87 @@ namespace TelzaProject.Persistence.Configurations
             builder.HasKey(c => c.Id);
             builder.Property(c => c.Id).HasDefaultValueSql("NEWSEQUENTIALID()");
             builder.Property(c => c.CompanyName).IsRequired().HasMaxLength(300);
+            builder.Property(c => c.OtherDesignatedNames).HasMaxLength(500);
             builder.Property(c => c.Address).IsRequired().HasMaxLength(500);
             builder.Property(c => c.City).IsRequired().HasMaxLength(100);
             builder.Property(c => c.State).IsRequired().HasMaxLength(100);
             builder.Property(c => c.Country).IsRequired().HasMaxLength(100);
             builder.Property(c => c.ZipCode).IsRequired().HasMaxLength(20);
-            builder.Property(c => c.BusinessLine).IsRequired().HasMaxLength(200);
+            builder.Property(c => c.MailingAddress).HasMaxLength(500);
+            builder.Property(c => c.MailingCityStateZip).HasMaxLength(300);
+            builder.Property(c => c.StateOfIncorporation).HasMaxLength(100);
+            builder.Property(c => c.BusinessLicenseNumber).HasMaxLength(100);
+            builder.Property(c => c.FeinNumber).IsRequired().HasMaxLength(50);
+            builder.Property(c => c.FrnNumber).IsRequired().HasMaxLength(50);
+            builder.Property(c => c.BusinessLine).IsRequired().HasMaxLength(500);
             builder.Property(c => c.MobileNumber).IsRequired().HasMaxLength(50);
             builder.Property(c => c.TeamsOrWhatsApp).IsRequired().HasMaxLength(200);
             builder.Property(c => c.FilerID499).IsRequired().HasMaxLength(100);
             builder.Property(c => c.BusinessContactName).IsRequired().HasMaxLength(200);
+            builder.Property(c => c.BusinessPhone).IsRequired().HasMaxLength(50);
+            builder.Property(c => c.MobilePhoneSeparate).HasMaxLength(50);
+            builder.Property(c => c.EmailForRates).HasMaxLength(200);
+            builder.Property(c => c.EmailForNotices).HasMaxLength(200);
+            builder.Property(c => c.EmailForBalances).HasMaxLength(200);
             builder.Property(c => c.VoipPortalEmail).IsRequired().HasMaxLength(200);
+            builder.Property(c => c.CustomerMainPhone).HasMaxLength(50);
+            builder.Property(c => c.CustomerFax).HasMaxLength(50);
+            builder.Property(c => c.CustomerUrl).HasMaxLength(500);
+            builder.Property(c => c.CompanyContactName).HasMaxLength(200);
+            builder.Property(c => c.PrimaryMainEmail).HasMaxLength(200);
+            builder.Property(c => c.BillingAccountingEmail).HasMaxLength(200);
+            builder.Property(c => c.SupportNocEmail).HasMaxLength(200);
+            builder.Property(c => c.LegalEmail).HasMaxLength(200);
+            builder.Property(c => c.ComplianceEmail).HasMaxLength(200);
+            builder.Property(c => c.FraudReportEmail).HasMaxLength(200);
+            builder.Property(c => c.SkypeId).HasMaxLength(200);
             builder.Property(c => c.CorporateType).HasConversion<int>();
         }
     }
 
-    public class BillingInformationConfiguration : IEntityTypeConfiguration<BillingInformation>
+    public class CompanyConfiguration : IEntityTypeConfiguration<Company>
     {
-        public void Configure(EntityTypeBuilder<BillingInformation> builder)
+        public void Configure(EntityTypeBuilder<Company> builder)
         {
-            builder.HasKey(b => b.Id);
-            builder.Property(b => b.Id).HasDefaultValueSql("NEWSEQUENTIALID()");
-            builder.Property(b => b.BillingContactName).HasMaxLength(200);
-            builder.Property(b => b.BillingEmail).HasMaxLength(200);
-            builder.Property(b => b.BillingAddress).HasMaxLength(500);
-            builder.Property(b => b.BillingCity).HasMaxLength(100);
-            builder.Property(b => b.BillingState).HasMaxLength(100);
-            builder.Property(b => b.BillingCountry).HasMaxLength(100);
-            builder.Property(b => b.BillingZipCode).HasMaxLength(20);
-            builder.Property(b => b.PaymentMethod).HasMaxLength(100);
-            builder.Property(b => b.BankName).HasMaxLength(200);
-            builder.Property(b => b.AccountName).HasMaxLength(200);
-            builder.Property(b => b.AccountNumber).HasMaxLength(100);
-            builder.Property(b => b.RoutingNumber).HasMaxLength(100);
+            builder.ToTable("Companies");
+            builder.HasKey(c => c.Id);
+            builder.Property(c => c.Id).HasDefaultValueSql("NEWSEQUENTIALID()");
+            builder.Property(c => c.CompanyName).IsRequired().HasMaxLength(300);
+            builder.Property(c => c.OtherDesignatedNames).HasMaxLength(500);
+            builder.Property(c => c.Address).IsRequired().HasMaxLength(500);
+            builder.Property(c => c.City).IsRequired().HasMaxLength(100);
+            builder.Property(c => c.State).IsRequired().HasMaxLength(100);
+            builder.Property(c => c.Country).IsRequired().HasMaxLength(100);
+            builder.Property(c => c.ZipCode).IsRequired().HasMaxLength(20);
+            builder.Property(c => c.MailingAddress).HasMaxLength(500);
+            builder.Property(c => c.MailingCityStateZip).HasMaxLength(300);
+            builder.Property(c => c.StateOfIncorporation).HasMaxLength(100);
+            builder.Property(c => c.BusinessLicenseNumber).HasMaxLength(100);
+            builder.Property(c => c.FeinNumber).IsRequired().HasMaxLength(50);
+            builder.Property(c => c.FrnNumber).IsRequired().HasMaxLength(50);
+            builder.Property(c => c.BusinessLine).IsRequired().HasMaxLength(500);
+            builder.Property(c => c.MobileNumber).IsRequired().HasMaxLength(50);
+            builder.Property(c => c.TeamsOrWhatsApp).IsRequired().HasMaxLength(200);
+            builder.Property(c => c.FilerID499).IsRequired().HasMaxLength(100);
+            builder.Property(c => c.BusinessContactName).IsRequired().HasMaxLength(200);
+            builder.Property(c => c.BusinessPhone).IsRequired().HasMaxLength(50);
+            builder.Property(c => c.MobilePhoneSeparate).HasMaxLength(50);
+            builder.Property(c => c.EmailForRates).HasMaxLength(200);
+            builder.Property(c => c.EmailForNotices).HasMaxLength(200);
+            builder.Property(c => c.EmailForBalances).HasMaxLength(200);
+            builder.Property(c => c.VoipPortalEmail).IsRequired().HasMaxLength(200);
+            builder.Property(c => c.CustomerMainPhone).HasMaxLength(50);
+            builder.Property(c => c.CustomerFax).HasMaxLength(50);
+            builder.Property(c => c.CustomerUrl).HasMaxLength(500);
+            builder.Property(c => c.CompanyContactName).HasMaxLength(200);
+            builder.Property(c => c.PrimaryMainEmail).HasMaxLength(200);
+            builder.Property(c => c.BillingAccountingEmail).HasMaxLength(200);
+            builder.Property(c => c.SupportNocEmail).HasMaxLength(200);
+            builder.Property(c => c.LegalEmail).HasMaxLength(200);
+            builder.Property(c => c.ComplianceEmail).HasMaxLength(200);
+            builder.Property(c => c.FraudReportEmail).HasMaxLength(200);
+            builder.Property(c => c.SkypeId).HasMaxLength(200);
+            builder.Property(c => c.CorporateType).HasConversion<int>();
         }
     }
 
@@ -87,7 +131,8 @@ namespace TelzaProject.Persistence.Configurations
             builder.Property(t => t.Id).HasDefaultValueSql("NEWSEQUENTIALID()");
             builder.Property(t => t.DiallerServerLink).HasMaxLength(500);
             builder.Property(t => t.ValidationLink).HasMaxLength(500);
-            builder.Property(t => t.ServerIPs).HasMaxLength(1000);
+            builder.Property(t => t.ServerIPs).HasMaxLength(4000);
+            builder.Property(t => t.DiallerLevel9AccessDetails).IsRequired().HasMaxLength(1000);
         }
     }
 

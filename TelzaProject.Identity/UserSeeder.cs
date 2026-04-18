@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using TelzaProject.Persistence.Identity;
 
 namespace TelzaProject.Identity
 {
@@ -9,8 +10,8 @@ namespace TelzaProject.Identity
         public static async Task SeedAdminUser(IServiceProvider serviceProvider)
         {
             using var scope = serviceProvider.CreateScope();
-            var userManager = scope.ServiceProvider.GetRequiredService<UserManager<IdentityUser>>();
-            var logger = scope.ServiceProvider.GetRequiredService<ILogger<IdentityUser>>();
+            var userManager = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
+            var logger = scope.ServiceProvider.GetRequiredService<ILogger<ApplicationUser>>();
 
             var adminEmail = "admin@telza.com";
             var adminUser = await userManager.FindByEmailAsync(adminEmail);
@@ -18,7 +19,7 @@ namespace TelzaProject.Identity
             if (adminUser == null)
             {
                 logger.LogInformation("Seeding Admin User...");
-                adminUser = new IdentityUser
+                adminUser = new ApplicationUser
                 {
                     UserName = adminEmail,
                     Email = adminEmail,

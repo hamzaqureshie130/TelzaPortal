@@ -1,4 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Design;
 using Microsoft.Extensions.Configuration;
 
@@ -8,8 +8,11 @@ namespace TelzaProject.Persistence
     {
         public TelzaPortalDbContext CreateDbContext(string[] args)
         {
+            var apiFolder = Path.GetFullPath(Path.Combine(Directory.GetCurrentDirectory(), "..", "TelzaPortal.API"));
+            var basePath = Directory.Exists(apiFolder) ? apiFolder : Directory.GetCurrentDirectory();
+
             var config = new ConfigurationBuilder()
-                .SetBasePath(Directory.GetCurrentDirectory())
+                .SetBasePath(basePath)
                 .AddJsonFile("appsettings.json", optional: false)
                 .Build();
 

@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -8,6 +8,7 @@ using TelzaProject.Application.Contracts;
 using TelzaProject.Identity.Models;
 using TelzaProject.Identity.Services;
 using TelzaProject.Persistence;
+using TelzaProject.Persistence.Identity;
 
 
 
@@ -24,12 +25,12 @@ namespace TelzaProject.Identity
             var jwtSettings = configuration.GetSection("JwtSettings").Get<JwtSettings>()!;
 
             // ASP.NET Core Identity
-            services.AddIdentity<IdentityUser, IdentityRole>(options =>
+            services.AddIdentity<ApplicationUser, IdentityRole>(options =>
             {
                 options.Password.RequireDigit = true;
-                options.Password.RequiredLength = 6;
+                options.Password.RequiredLength = 8;
                 options.Password.RequireNonAlphanumeric = false;
-                options.Password.RequireUppercase = false;
+                options.Password.RequireUppercase = true;
                 options.Password.RequireLowercase = false;
                 options.User.RequireUniqueEmail = true;
             })

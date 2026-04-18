@@ -10,9 +10,11 @@ namespace TelzaProject.Domain.Entities
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         public DateTime? UpdatedAt { get; set; }
 
+        /// <summary>JSON snapshot of banking, trade references, regulatory, and attestation as submitted (for admin review).</summary>
+        public string? OnboardingExtensionsJson { get; set; }
+
         // Navigation properties
         public CompanyDetails? CompanyDetails { get; set; }
-        public BillingInformation? BillingInformation { get; set; }
         public TechnicalInformation? TechnicalInformation { get; set; }
         public ICollection<ProductSelection> ProductSelections { get; set; } = new List<ProductSelection>();
     }

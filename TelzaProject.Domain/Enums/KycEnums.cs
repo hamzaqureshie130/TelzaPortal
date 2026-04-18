@@ -23,6 +23,7 @@ namespace TelzaProject.Domain.Enums
         LLC = 2,
         Corporation = 3,
         Partnership = 4,
-        Other = 5
+        Other = 5,
+        NonProfit = 6
     }
 }

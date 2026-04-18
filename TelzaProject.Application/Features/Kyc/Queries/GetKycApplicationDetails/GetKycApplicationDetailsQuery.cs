@@ -1,3 +1,5 @@
+using System.Text.Json;
+using System.Text.Json.Serialization;
 using AutoMapper;
 using MediatR;
 using TelzaProject.Application.Contracts;
@@ -13,6 +15,13 @@ namespace TelzaProject.Application.Features.Kyc.Queries.GetKycApplicationDetails
 
     public class GetKycApplicationDetailsQueryHandler : IRequestHandler<GetKycApplicationDetailsQuery, KycApplicationDto>
     {
+        private static readonly JsonSerializerOptions SnapshotReadOpts = new()
+        {
+            PropertyNameCaseInsensitive = true,
+            PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+            NumberHandling = JsonNumberHandling.AllowReadingFromString,
+        };
+
         private readonly IKycRepository _kycRepository;
         private readonly IMapper _mapper;
 
@@ -27,7 +36,20 @@ namespace TelzaProject.Application.Features.Kyc.Queries.GetKycApplicationDetails
             var kyc = await _kycRepository.GetKycWithAllDetailsAsync(request.Id)
                 ?? throw new NotFoundException(nameof(Domain.Entities.KycApplication), request.Id);
 
-            return _mapper.Map<KycApplicationDto>(kyc);
+            var dto = _mapper.Map<KycApplicationDto>(kyc);
+            if (!string.IsNullOrWhiteSpace(kyc.OnboardingExtensionsJson))
+            {
+                try
+                {
+                    dto.OnboardingExtensions = JsonSerializer.Deserialize<KycOnboardingSnapshotDto>(kyc.OnboardingExtensionsJson, SnapshotReadOpts);
+                }
+                catch (JsonException)
+                {
+                    // leave OnboardingExtensions null
+                }
+            }
+
+            return dto;
         }
     }
 }

@@ -1932,6 +1932,120 @@ img {
     border: 1px solid #ddd;
 }
 
+/* Tighter layout for preview + print (single page) */
+.tpl-invoice--compact .tpl-header-bar {
+    height: 52px;
+}
+
+.tpl-invoice--compact .tpl-logo-img {
+    height: 40px;
+    margin-right: 14px;
+}
+
+.tpl-invoice--compact .tpl-body {
+    padding: 16px 20px 14px;
+}
+
+.tpl-invoice--compact .tpl-invoice-title {
+    font-size: 1.65rem;
+    margin-bottom: 12px;
+}
+
+.tpl-invoice--compact .tpl-meta-block {
+    gap: 4px;
+    margin-bottom: 12px;
+}
+
+.tpl-invoice--compact .tpl-info-row {
+    flex-direction: row;
+    flex-wrap: nowrap;
+    align-items: flex-start;
+    gap: 1rem;
+    margin-bottom: 12px;
+}
+
+.tpl-invoice--compact .tpl-bill-col {
+    flex: 1 1 50%;
+    min-width: 0;
+}
+
+.tpl-invoice--compact .tpl-pay-col {
+    flex: 0 0 46%;
+    min-width: 0;
+    max-width: 46%;
+    margin-left: auto;
+    border-left: 1px solid #e8e8e8;
+    padding-left: 12px;
+}
+
+.tpl-invoice--compact .tpl-info-address {
+    max-width: none;
+    font-size: 0.75rem;
+    line-height: 1.35;
+}
+
+.tpl-invoice--compact .tpl-pay-line {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 8px;
+    font-size: 0.72rem;
+    padding: 2px 0;
+    margin-bottom: 2px;
+    line-height: 1.25;
+}
+
+.tpl-invoice--compact .tpl-pay-line span:first-child {
+    flex: 0 0 46%;
+    font-weight: 600;
+    color: #555;
+}
+
+.tpl-invoice--compact .tpl-pay-line span:last-child {
+    flex: 1;
+    text-align: right;
+    word-break: break-word;
+    font-weight: 500;
+    color: #111;
+}
+
+.tpl-invoice--compact .tpl-table {
+    margin-bottom: 12px;
+    font-size: 0.78rem;
+}
+
+.tpl-invoice--compact .tpl-table th {
+    padding: 6px 8px;
+    font-size: 0.68rem;
+}
+
+.tpl-invoice--compact .tpl-table td {
+    padding: 5px 8px;
+    min-height: 0;
+}
+
+.tpl-invoice--compact .tpl-footer-row {
+    margin-bottom: 10px;
+}
+
+.tpl-invoice--compact .tpl-thank-you {
+    font-size: 1.05rem;
+}
+
+.tpl-invoice--compact .tpl-total-box {
+    padding: 8px 14px;
+    min-width: 180px;
+}
+
+.tpl-invoice--compact .tpl-contacts {
+    padding-top: 8px;
+    gap: 0.75rem;
+}
+
+.tpl-invoice--compact .tpl-contacts span {
+    font-size: 0.68rem;
+}
+
 /* ─── TOP HEADER BAR ─── */
 .tpl-header-bar {
     background: #1a3329;
@@ -2161,42 +2275,146 @@ img {
 }
 
 /* ═══════════════════════════════════════════
-   PRINT STYLES
+   PRINT STYLES (invoice preview modal)
+   Class `print-invoice-preview` is set on <html> in beforeprint when
+   the invoice preview modal is open — avoids blank/broken PDF preview
+   from visibility hacks + body overflow:hidden + fixed modal layout.
 ═══════════════════════════════════════════ */
 @media print {
-    body * {
-        visibility: hidden;
+    @page {
+        margin: 8mm;
+        size: A4 portrait;
     }
 
-    #invoice-print-area,
-    #invoice-print-area * {
-        visibility: visible;
+    html, body {
+        height: auto !important;
+        overflow: visible !important;
+        background: #fff !important;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
     }
 
-    #invoice-print-area {
-        position: absolute;
-        left: 0;
-        top: 0;
-        width: 100%;
+    html.print-invoice-preview #auth-screen,
+    html.print-invoice-preview #app-shell,
+    html.print-invoice-preview #modal-add-customer,
+    html.print-invoice-preview #modal-kyc-detail,
+    html.print-invoice-preview #modal-kyc-status,
+    html.print-invoice-preview #modal-confirm-delete,
+    html.print-invoice-preview #toast-stack {
+        display: none !important;
+    }
+
+    html.print-invoice-preview #modal-preview-invoice {
+        display: block !important;
+        position: static !important;
+        inset: auto !important;
+        padding: 0 !important;
+        margin: 0 !important;
+        background: transparent !important;
+        backdrop-filter: none !important;
+        overflow: visible !important;
+        z-index: auto !important;
+        width: 100% !important;
+        min-height: 0 !important;
+        height: auto !important;
+        align-items: stretch !important;
+        justify-content: flex-start !important;
+    }
+
+    html.print-invoice-preview #modal-preview-invoice .modal-box {
+        display: block !important;
+        width: 100% !important;
+        max-width: none !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        border: none !important;
+        border-radius: 0 !important;
+        box-shadow: none !important;
+        overflow: visible !important;
+        animation: none !important;
+        transform: none !important;
+    }
+
+    html.print-invoice-preview #modal-preview-invoice .modal-head,
+    html.print-invoice-preview #modal-preview-invoice .modal-foot,
+    html.print-invoice-preview #modal-preview-invoice .modal-close {
+        display: none !important;
+    }
+
+    html.print-invoice-preview #invoice-print-area {
+        display: block !important;
+        width: 100% !important;
+        max-width: none !important;
+        padding: 0 !important;
+        margin: 0 !important;
+        overflow: visible !important;
+        position: static !important;
+        visibility: visible !important;
+    }
+
+    html.print-invoice-preview #invoice-print-area * {
+        visibility: visible !important;
+    }
+
+    html.print-invoice-preview .tpl-invoice {
+        border: none;
+        box-shadow: none;
+        max-width: none;
     }
 
     .print-hide {
         display: none !important;
     }
 
-    .tpl-invoice {
-        border: none;
-        box-shadow: none;
-    }
-
-    .tpl-header-bar {
+    html.print-invoice-preview .tpl-header-bar,
+    html.print-invoice-preview .tpl-table thead tr {
         -webkit-print-color-adjust: exact;
         print-color-adjust: exact;
     }
 
-    .tpl-table thead tr {
-        -webkit-print-color-adjust: exact;
-        print-color-adjust: exact;
+    /* One page: keep bill-to left + billing right; ignore mobile column stack */
+    html.print-invoice-preview .tpl-invoice--compact .tpl-info-row {
+        flex-direction: row !important;
+        flex-wrap: nowrap !important;
+        align-items: flex-start !important;
+        page-break-inside: avoid;
+    }
+
+    html.print-invoice-preview .tpl-invoice--compact .tpl-pay-col {
+        flex: 0 0 46% !important;
+        max-width: 46% !important;
+        margin-left: auto !important;
+    }
+
+    html.print-invoice-preview .tpl-invoice--compact .tpl-footer-row {
+        flex-direction: row !important;
+        align-items: center !important;
+        page-break-inside: avoid;
+    }
+
+    html.print-invoice-preview .tpl-invoice--compact .tpl-body {
+        padding: 10px 12px 8px !important;
+    }
+
+    html.print-invoice-preview .tpl-invoice--compact .tpl-header-bar {
+        height: 44px !important;
+    }
+
+    html.print-invoice-preview .tpl-invoice--compact .tpl-invoice-title {
+        font-size: 1.35rem !important;
+        margin-bottom: 8px !important;
+    }
+
+    html.print-invoice-preview .tpl-invoice--compact .tpl-table th,
+    html.print-invoice-preview .tpl-invoice--compact .tpl-table td {
+        padding: 4px 6px !important;
+        font-size: 0.72rem !important;
+    }
+
+    html.print-invoice-preview .tpl-invoice--compact .tpl-contacts {
+        flex-direction: row !important;
+        flex-wrap: wrap !important;
+        padding-top: 6px !important;
     }
 }
 
@@ -2400,11 +2618,91 @@ img {
 }
 
 /* ─── KYC Detail Modal ─── */
+.kyc-detail-toolbar {
+    display: flex;
+    align-items: center;
+    gap: .65rem;
+    padding: .65rem 1.5rem;
+    border-bottom: 1.5px solid var(--c-border);
+    background: var(--c-bg);
+}
+
+.kyc-detail-toolbar i {
+    color: var(--c-text-muted);
+    font-size: .85rem;
+}
+
+.kyc-detail-search {
+    flex: 1;
+    min-width: 0;
+    height: 2.35rem;
+    border: 1.5px solid var(--c-border);
+    border-radius: var(--radius);
+    padding: 0 .85rem;
+    font-size: .85rem;
+    font-family: inherit;
+    background: var(--c-card);
+    color: var(--c-dark);
+}
+
+.kyc-detail-search:focus {
+    outline: none;
+    border-color: var(--c-accent);
+    box-shadow: 0 0 0 3px var(--c-accent-lx);
+}
+
+.kyc-detail-notice {
+    grid-column: 1 / -1;
+    font-size: .82rem;
+    color: var(--c-text-muted);
+    background: var(--c-accent-lx);
+    border: 1.5px solid var(--c-accent-l);
+    border-radius: var(--radius);
+    padding: .75rem 1rem;
+    margin-bottom: .5rem;
+}
+
+.kyc-detail-section {
+    background: var(--c-card);
+    border: 1.5px solid var(--c-border);
+    border-radius: var(--radius);
+    padding: 1rem 1.15rem;
+}
+
+.kyc-detail-section--hidden,
+.kyc-detail-row--hidden {
+    display: none !important;
+}
+
+.kyc-detail-multiline {
+    white-space: pre-wrap;
+    text-align: left !important;
+    font-weight: 500 !important;
+    max-width: 100%;
+}
+
+.kyc-trade-ref-card {
+    border: 1.5px solid var(--c-border);
+    border-radius: var(--radius);
+    padding: .85rem 1rem;
+    margin-bottom: .65rem;
+    background: var(--c-bg);
+}
+
+.kyc-trade-ref-title {
+    font-size: .75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .05em;
+    color: var(--c-accent);
+    margin-bottom: .5rem;
+}
+
 .kyc-detail-grid {
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 1.5rem;
-    padding: 1.5rem;
+    padding: 0;
 }
 
 
@@ -2424,6 +2722,10 @@ img {
     margin-bottom: .85rem;
     padding-bottom: .5rem;
     border-bottom: 1.5px solid var(--c-accent-l);
+}
+
+.kyc-detail-section > .kyc-section-title {
+    margin-top: 0;
 }
 
 .kyc-detail-rows {

@@ -1,3 +1,4 @@
+using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi.Models;
 using TelzaProject.Application;
 using TelzaProject.Identity;
@@ -49,13 +50,26 @@ builder.Services.AddSwaggerGen(c =>
 });
 
 // ─── CORS (allow admin portal + KYC public form from any localhost/127.0.0.1) ──
+//builder.Services.AddCors(options =>
+//{
+//    options.AddPolicy("CorsPolicy", policy =>
+//        policy.SetIsOriginAllowed(origin =>
+//        {
+//            var uri = new Uri(origin);
+//            return uri.Host == "127.0.0.1" || uri.Host == "localhost";
+//        })
+//              .AllowAnyMethod()
+//              .AllowAnyHeader()
+//              .AllowCredentials());
+//});
+// ─── CORS (allow admin portal + KYC public form from any localhost/127.0.0.1) ──
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("CorsPolicy", policy =>
         policy.SetIsOriginAllowed(origin =>
         {
             var uri = new Uri(origin);
-            return uri.Host == "127.0.0.1" || uri.Host == "localhost";
+            return uri.Host == "127.0.0.1" || uri.Host == "localhost" || uri.Host == "admin.telza.co" || uri.Host == "kyc.telza.co";
         })
               .AllowAnyMethod()
               .AllowAnyHeader()
@@ -76,6 +90,13 @@ app.UseHttpsRedirection();
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
+
+// ─── Apply EF migrations (adds e.g. KycApplications.OnboardingExtensionsJson if pending) ──
+using (var scope = app.Services.CreateScope())
+{
+    var db = scope.ServiceProvider.GetRequiredService<TelzaPortalDbContext>();
+    await db.Database.MigrateAsync();
+}
 
 // ─── Seed Database ────────────────────────────────────────────────────────────
 await TelzaProject.Identity.UserSeeder.SeedAdminUser(app.Services);
