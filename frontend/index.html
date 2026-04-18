@@ -308,7 +308,8 @@
                         <div class="panel-toolbar">
                             <div class="search-field">
                                 <i class="fa-solid fa-magnifying-glass"></i>
-                                <input type="text" id="search-kyc" placeholder="Search company, contact, email, FEIN, phone, user ID…">
+                                <input type="text" id="search-kyc"
+                                    placeholder="Search company, contact, email, FEIN, phone, user ID…">
                             </div>
                             <div class="filter-pills">
                                 <button class="pill active" data-kycfilter="all">All</button>
@@ -556,61 +557,70 @@
                                             <label class="field-label">Payment Method</label>
                                             <div class="field-wrap">
                                                 <i class="fa-solid fa-credit-card field-icon"></i>
-                                                <input type="text" id="inv-payment-method" class="field-input" placeholder="e.g. Bank Transfer">
+                                                <input type="text" id="inv-payment-method" class="field-input"
+                                                    placeholder="e.g. Bank Transfer">
                                             </div>
                                         </div>
                                         <div class="field-group">
                                             <label class="field-label">Bank Name</label>
                                             <div class="field-wrap">
                                                 <i class="fa-solid fa-building-columns field-icon"></i>
-                                                <input type="text" id="inv-bank-name" class="field-input" placeholder="e.g. Chase Bank">
+                                                <input type="text" id="inv-bank-name" class="field-input"
+                                                    placeholder="e.g. Chase Bank">
                                             </div>
                                         </div>
                                         <div class="field-group">
                                             <label class="field-label">Bank Address</label>
                                             <div class="field-wrap">
                                                 <i class="fa-solid fa-location-dot field-icon"></i>
-                                                <input type="text" id="inv-bank-address" class="field-input" placeholder="Bank branch / address">
+                                                <input type="text" id="inv-bank-address" class="field-input"
+                                                    placeholder="Bank branch / address">
                                             </div>
                                         </div>
                                         <div class="field-group">
                                             <label class="field-label">Bank Contact Name</label>
                                             <div class="field-wrap">
                                                 <i class="fa-solid fa-user field-icon"></i>
-                                                <input type="text" id="inv-account-name" class="field-input" placeholder="Contact / account holder name">
+                                                <input type="text" id="inv-account-name" class="field-input"
+                                                    placeholder="Contact / account holder name">
                                             </div>
                                         </div>
                                         <div class="field-group">
                                             <label class="field-label">Bank Contact Phone</label>
                                             <div class="field-wrap">
                                                 <i class="fa-solid fa-phone field-icon"></i>
-                                                <input type="text" id="inv-contact-phone" class="field-input" placeholder="Contact phone">
+                                                <input type="text" id="inv-contact-phone" class="field-input"
+                                                    placeholder="Contact phone">
                                             </div>
                                         </div>
                                         <div class="field-group">
                                             <label class="field-label">Bank Contact Email</label>
                                             <div class="field-wrap">
                                                 <i class="fa-regular fa-envelope field-icon"></i>
-                                                <input type="email" id="inv-contact-email" class="field-input" placeholder="Contact email">
+                                                <input type="email" id="inv-contact-email" class="field-input"
+                                                    placeholder="Contact email">
                                             </div>
                                         </div>
                                         <div class="field-group">
                                             <label class="field-label">Contact Fax</label>
                                             <div class="field-wrap">
                                                 <i class="fa-solid fa-fax field-icon"></i>
-                                                <input type="text" id="inv-contact-fax" class="field-input" placeholder="Fax (optional)">
+                                                <input type="text" id="inv-contact-fax" class="field-input"
+                                                    placeholder="Fax (optional)">
                                             </div>
                                         </div>
                                         <div class="field-group">
                                             <label class="field-label">Account Number</label>
                                             <div class="field-wrap">
                                                 <i class="fa-solid fa-hashtag field-icon"></i>
-                                                <input type="text" id="inv-account-number" class="field-input" placeholder="Account number">
+                                                <input type="text" id="inv-account-number" class="field-input"
+                                                    placeholder="Account number">
                                             </div>
                                         </div>
                                         <div class="field-group">
                                             <label class="field-label">Notes</label>
-                                            <textarea id="inv-notes" class="field-input field-textarea" rows="2" placeholder="Additional notes…"></textarea>
+                                            <textarea id="inv-notes" class="field-input field-textarea" rows="2"
+                                                placeholder="Additional notes…"></textarea>
                                         </div>
                                     </div>
                                 </div>
@@ -763,7 +773,8 @@
                     Application <code id="kyc-status-application-id" style="font-size:.8rem;"></code>
                 </p>
                 <label class="form-label" for="kyc-status-select">Status</label>
-                <select id="kyc-status-select" class="form-select" style="width:100%;height:2.75rem;border-radius:var(--radius);border:1.5px solid var(--c-border);padding:0 .75rem;font:inherit;">
+                <select id="kyc-status-select" class="form-select"
+                    style="width:100%;height:2.75rem;border-radius:var(--radius);border:1.5px solid var(--c-border);padding:0 .75rem;font:inherit;">
                     <option value="1">Pending</option>
                     <option value="2">Under Review</option>
                     <option value="3">Approved</option>
@@ -772,7 +783,8 @@
             </div>
             <div class="modal-foot">
                 <button type="button" class="btn btn-ghost" data-modal="modal-kyc-status">Cancel</button>
-                <button type="button" class="btn btn-primary" id="btn-kyc-status-save"><i class="fa-solid fa-check"></i> Save</button>
+                <button type="button" class="btn btn-primary" id="btn-kyc-status-save"><i class="fa-solid fa-check"></i>
+                    Save</button>
             </div>
         </div>
     </div>
