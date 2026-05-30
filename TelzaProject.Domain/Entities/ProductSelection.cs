@@ -18,6 +18,8 @@ namespace TelzaProject.Domain.Entities
 
         // ── Dialler Server ──────────────────────────────────────────────────
         public int? NumberOfAgents { get; set; }
+        public int? NumberOfCampaigns { get; set; }
+        public string? DiallerSettings { get; set; }
 
         // ── Inbound DID ─────────────────────────────────────────────────────
         public int? NumberOfDIDs { get; set; }
@@ -30,6 +32,8 @@ namespace TelzaProject.Domain.Entities
         public int? NumberOfBots { get; set; }
         public string? BotServerInformation { get; set; }
         public string? CloserDiallerDetails { get; set; }
+        public string? AiBotCampaign { get; set; }
+        public string? AiBotScript { get; set; }
 
         public KycApplication KycApplication { get; set; } = null!;
     }

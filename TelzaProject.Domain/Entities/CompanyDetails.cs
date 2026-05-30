@@ -46,6 +46,10 @@ namespace TelzaProject.Domain.Entities
         public string? FraudReportEmail { get; set; }
         public string? SkypeId { get; set; }
 
+        public string? VendorType { get; set; }
+        public string? Campaign { get; set; }
+        public string? Rmd { get; set; }
+
         public KycApplication KycApplication { get; set; } = null!;
     }
 }

@@ -63,8 +63,15 @@ namespace TelzaProject.Application.Features.Kyc.Commands.SubmitKycApplication
 
                 // Link sub-entities to the parent KYC
                 if (kyc.CompanyDetails != null) kyc.CompanyDetails.KycApplicationId = kyc.Id;
-            if (kyc.TechnicalInformation != null) kyc.TechnicalInformation.KycApplicationId = kyc.Id;
-                foreach (var p in kyc.ProductSelections) p.KycApplicationId = kyc.Id;
+                if (kyc.TechnicalInformation != null) kyc.TechnicalInformation.KycApplicationId = kyc.Id;
+                foreach (var p in kyc.ProductSelections) 
+                {
+                    p.KycApplicationId = kyc.Id;
+                    if (p.ProductType == TelzaProject.Domain.Enums.ProductType.InboundDID && string.IsNullOrWhiteSpace(p.SpecificAreaCodes))
+                    {
+                        p.SpecificAreaCodes = "can be Random";
+                    }
+                }
 
                 var created = await _kycRepository.AddAsync(kyc);
                 var full = await _kycRepository.GetKycWithAllDetailsAsync(created.Id);

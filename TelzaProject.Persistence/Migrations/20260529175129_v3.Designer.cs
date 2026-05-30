@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using TelzaProject.Persistence;
 
@@ -11,9 +12,11 @@ using TelzaProject.Persistence;
 namespace TelzaProject.Persistence.Migrations
 {
     [DbContext(typeof(TelzaPortalDbContext))]
-    partial class TelzaPortalDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260529175129_v3")]
+    partial class v3
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder

@@ -43,6 +43,10 @@ namespace TelzaProject.Application.DTOs
         public string? ComplianceEmail { get; set; }
         public string? FraudReportEmail { get; set; }
         public string? SkypeId { get; set; }
+        
+        public string? VendorType { get; set; }
+        public string? Campaign { get; set; }
+        public string? Rmd { get; set; }
     }
 
     // ─── Product Selection ──────────────────────────────────────────────────────
@@ -55,6 +59,8 @@ namespace TelzaProject.Application.DTOs
 
         // Dialler Server
         public int? NumberOfAgents { get; set; }
+        public int? NumberOfCampaigns { get; set; }
+        public string? DiallerSettings { get; set; }
 
         // Inbound DID
         public int? NumberOfDIDs { get; set; }
@@ -67,6 +73,8 @@ namespace TelzaProject.Application.DTOs
         public int? NumberOfBots { get; set; }
         public string? BotServerInformation { get; set; }
         public string? CloserDiallerDetails { get; set; }
+        public string? AiBotCampaign { get; set; }
+        public string? AiBotScript { get; set; }
     }
 
     // ─── Technical Information ──────────────────────────────────────────────────

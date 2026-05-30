@@ -28,6 +28,7 @@ const state = {
     formData: {
         user: { email: '', password: '', confirmPassword: '' },
         company: {
+            vendorType: '', campaign: '', rmd: '',
             companyName: '', otherDesignatedNames: '', address: '', city: '', state: '', country: 'United States',
             zipCode: '', mailingAddress: '', mailingCityStateZip: '', businessBasedInUs: true,
             stateOfIncorporation: '', dateOfIncorporation: '', businessLicenseNumber: '',
@@ -88,13 +89,14 @@ const state = {
 /* ======== STEPS CONFIG ======== */
 const STEPS = [
     { id: 1, title: 'Create User' },
-    { id: 2, title: 'Company Information' },
-    { id: 3, title: 'Banking Information' },
-    { id: 4, title: 'Trade References' },
-    { id: 5, title: 'Regulatory' },
-    { id: 6, title: 'Products' },
-    { id: 7, title: 'Technical' },
-    { id: 8, title: 'Attestation' },
+    { id: 2, title: 'Vendor Type' },
+    { id: 3, title: 'Company Information' },
+    { id: 4, title: 'Banking Information' },
+    { id: 5, title: 'Trade References' },
+    { id: 6, title: 'Regulatory' },
+    { id: 7, title: 'Products' },
+    { id: 8, title: 'Technical' },
+    { id: 9, title: 'Attestation' },
 ];
 
 const BUSINESS_DESC_OPTIONS = [
@@ -133,7 +135,6 @@ const PRODUCTS = [
         color: 'text-blue-600',
         bgColor: 'bg-blue-100',
         borderClass: 'border-blue-600',
-        fields: [{ name: 'numberOfPorts', label: 'Number of Ports', type: 'number', placeholder: 'e.g., 50' }],
     },
     {
         id: 'dialler_server',
@@ -143,7 +144,6 @@ const PRODUCTS = [
         color: 'text-blue-600',
         bgColor: 'bg-blue-100',
         borderClass: 'border-blue-600',
-        fields: [{ name: 'numberOfAgents', label: 'Number of Agents', type: 'number', placeholder: 'e.g., 20' }],
     },
     {
         id: 'inbound_did',
@@ -153,10 +153,6 @@ const PRODUCTS = [
         color: 'text-blue-600',
         bgColor: 'bg-blue-100',
         borderClass: 'border-blue-600',
-        fields: [
-            { name: 'numberOfDIDs', label: 'Number of DIDs Required', type: 'number', placeholder: 'e.g., 100' },
-            { name: 'specificAreaCodes', label: 'Any Specific Area Codes?', type: 'text', placeholder: 'Optional' },
-        ],
     },
     {
         id: 'toll_free',
@@ -166,7 +162,6 @@ const PRODUCTS = [
         color: 'text-blue-600',
         bgColor: 'bg-blue-100',
         borderClass: 'border-blue-600',
-        fields: [{ name: 'tfnQuantity', label: 'Quantity', type: 'number', placeholder: 'e.g., 10' }],
     },
     {
         id: 'ai_bots',
@@ -176,11 +171,6 @@ const PRODUCTS = [
         color: 'text-blue-600',
         bgColor: 'bg-blue-100',
         borderClass: 'border-blue-600',
-        fields: [
-            { name: 'numberOfBots', label: 'Number of Bots', type: 'number', placeholder: 'e.g., 5' },
-            { name: 'botServerInformation', label: 'Server Information to Configure On', type: 'text', placeholder: 'Hostnames, IPs, ports' },
-            { name: 'closerDiallerDetails', label: 'Closer Dialler Details', type: 'text', placeholder: 'Integration notes' },
-        ],
     },
 ];
 
@@ -258,7 +248,58 @@ function renderStep1() {
     </div>`;
 }
 
-function renderStep2() {
+function renderStep2Vendor() {
+    const c = state.formData.company;
+    const voip = c.vendorType === 'VoIP Vendor';
+    const cc   = c.vendorType === 'Call Centre';
+
+    const vendorTypes = [
+        {
+            id: 'VoIP Vendor',
+            title: 'VoIP Vendor',
+            description: 'Carrier, reseller, or enterprise providing Voice over IP services, SIP trunking, or telecom infrastructure.',
+            icon: ICONS.phone,
+        },
+        {
+            id: 'Call Centre',
+            title: 'Call Centre',
+            description: 'Outbound or inbound call centre / BPO operation using dialler technology and agent-based campaigns.',
+            icon: ICONS.users,
+        },
+    ];
+
+    return `
+    <div class="step-space">
+        <div>
+            <h2 class="step-title">Vendor Type</h2>
+            <p class="step-subtitle">Select the type of vendor you are onboarding as. This controls which fields are required throughout the form.</p>
+        </div>
+        <div class="products-grid" id="vendorTypeGrid">
+            ${vendorTypes.map(vt => {
+                const isSelected = c.vendorType === vt.id;
+                return `
+                <div class="product-card ${isSelected ? 'selected border-blue-600' : ''}"
+                     data-vendor-type="${vt.id}" role="button" tabindex="0"
+                     aria-pressed="${isSelected}" style="cursor:pointer;">
+                    <div class="product-card-header">
+                        <div class="icon-circle bg-blue-100 text-blue-600">${vt.icon}</div>
+                        <div style="flex:1">
+                            <div class="product-title">${vt.title}</div>
+                            <div class="product-desc">${vt.description}</div>
+                        </div>
+                        <div class="product-check ${isSelected ? 'checked' : ''}">
+                            ${ICONS.checkSm}
+                        </div>
+                    </div>
+                    <input type="radio" name="vendorType" value="${vt.id}" data-section="company"
+                           ${isSelected ? 'checked' : ''} style="display:none;" />
+                </div>`;
+            }).join('')}
+        </div>
+    </div>`;
+}
+
+function renderStep3() {
     const c = state.formData.company;
     const typeOptions = CORPORATE_TYPES.map(t =>
         `<option value="${t}" ${c.corporateType === t ? 'selected' : ''}>${t}</option>`
@@ -455,11 +496,21 @@ function renderStep2() {
                 <label class="form-label" for="skypeId">Skype ID</label>
                 <input class="form-input" id="skypeId" name="skypeId" type="text" value="${escHtml(c.skypeId)}" data-section="company" />
             </div>
+            
+            <div class="section-divider col-span-2"><h3>Operations (Call Centre)</h3></div>
+            <div class="form-group">
+                <label class="form-label" for="campaign">Campaign ${c.vendorType === 'Call Centre' ? '<span aria-hidden="true">*</span>' : ''}</label>
+                <input class="form-input" id="campaign" name="campaign" type="text" value="${escHtml(c.campaign)}" data-section="company" />
+            </div>
+            <div class="form-group">
+                <label class="form-label" for="rmd">RMD (Recurring Monthly Deposit?) ${c.vendorType === 'Call Centre' ? '<span aria-hidden="true">*</span>' : ''}</label>
+                <input class="form-input" id="rmd" name="rmd" type="text" value="${escHtml(c.rmd)}" data-section="company" />
+            </div>
         </div>
     </div>`;
 }
 
-function renderStep3() {
+function renderStep4() {
     const bk = state.formData.banking;
     const bankYes = bk.hasUsBankAccount === true;
     const bankNo = bk.hasUsBankAccount === false;
@@ -747,37 +798,121 @@ function renderStep7Products() {
 }
 
 function renderStep8Technical() {
+    const sp = state.formData.products.selectedProducts;
+    const details = state.formData.products.details;
     const t = state.formData.technical;
-    return `
+    
+    // Dynamic logic
+    const hasDiallerServer = sp.includes('dialler_server');
+    const hasVoip = sp.includes('voip');
+    const hasAiBots = sp.includes('ai_bots');
+    const needsThirdPartyDialler = !hasDiallerServer && (hasVoip || hasAiBots);
+
+    let html = `
     <div class="step-space">
         <div>
             <h2 class="step-title">Technical Information</h2>
-            <p class="step-subtitle">Provide connectivity and validation details for provisioning.</p>
+            <p class="step-subtitle">Provide details for your selected products.</p>
         </div>
-        <div class="form-grid form-grid-2">
+        <div class="form-grid form-grid-2">`;
+
+    if (needsThirdPartyDialler) {
+        html += `
+            <div class="section-divider col-span-2"><h3>Third-Party Dialler Access</h3></div>
             <div class="form-group col-span-2">
-                <label class="form-label" for="diallerLink">Dialler server link (third-party dialler only)</label>
-                <input class="form-input" id="diallerLink" name="diallerServerLink" type="url" placeholder="https://..." value="${escHtml(t.diallerServerLink)}"
-                    data-section="technical" />
+                <label class="form-label" for="diallerLink">Dialler server link <span aria-hidden="true">*</span></label>
+                <input class="form-input" id="diallerLink" name="diallerServerLink" type="url" placeholder="https://..." value="${escHtml(t.diallerServerLink)}" data-section="technical" />
             </div>
             <div class="form-group col-span-2">
                 <label class="form-label" for="valLink">Validation link <span aria-hidden="true">*</span></label>
-                <input class="form-input" id="valLink" name="validationLink" type="url" value="${escHtml(t.validationLink)}"
-                    data-section="technical" />
+                <input class="form-input" id="valLink" name="validationLink" type="url" value="${escHtml(t.validationLink)}" data-section="technical" />
             </div>
             <div class="form-group col-span-2">
                 <label class="form-label" for="serverIps">Server IPs <span aria-hidden="true">*</span></label>
-                <textarea class="form-input" id="serverIps" name="serverIPs" rows="4" placeholder="One IP per line"
-                    data-section="technical">${escHtml(t.serverIPs)}</textarea>
+                <textarea class="form-input" id="serverIps" name="serverIPs" rows="4" placeholder="One IP per line" data-section="technical">${escHtml(t.serverIPs)}</textarea>
             </div>
             <div class="form-group col-span-2">
                 <label class="form-label" for="l9access">Dialler level 9 access <span aria-hidden="true">*</span></label>
                 <p class="step-subtitle" style="margin:-.25rem 0 .5rem;font-size:.8rem;">SSH key, API token, or other credential text your team uses for access.</p>
-                <textarea class="form-input" id="l9access" name="diallerLevel9AccessDetails" rows="3"
-                    data-section="technical">${escHtml(t.diallerLevel9AccessDetails)}</textarea>
+                <textarea class="form-input" id="l9access" name="diallerLevel9AccessDetails" rows="3" data-section="technical">${escHtml(t.diallerLevel9AccessDetails)}</textarea>
+            </div>`;
+    }
+
+    if (sp.includes('voip')) {
+        const pd = details['voip'] || {};
+        html += `
+            <div class="section-divider col-span-2"><h3>VoIP</h3></div>
+            <div class="form-group col-span-2">
+                <label class="form-label" for="voip-numberOfPorts">Number of ports <span aria-hidden="true">*</span></label>
+                <input class="form-input" id="voip-numberOfPorts" type="number" placeholder="e.g., 50" value="${escHtml(pd.numberOfPorts || '')}" data-product-key="voip" data-field-name="numberOfPorts" />
+            </div>`;
+    }
+
+    if (sp.includes('dialler_server')) {
+        const pd = details['dialler_server'] || {};
+        html += `
+            <div class="section-divider col-span-2"><h3>Dialler Server</h3></div>
+            <div class="form-group">
+                <label class="form-label" for="dialler-numberOfAgents">Number of agents <span aria-hidden="true">*</span></label>
+                <input class="form-input" id="dialler-numberOfAgents" type="number" placeholder="e.g., 20" value="${escHtml(pd.numberOfAgents || '')}" data-product-key="dialler_server" data-field-name="numberOfAgents" />
             </div>
+            <div class="form-group">
+                <label class="form-label" for="dialler-numberOfCampaigns">Number of campaigns <span aria-hidden="true">*</span></label>
+                <input class="form-input" id="dialler-numberOfCampaigns" type="number" placeholder="e.g., 5" value="${escHtml(pd.numberOfCampaigns || '')}" data-product-key="dialler_server" data-field-name="numberOfCampaigns" />
+            </div>
+            <div class="form-group col-span-2">
+                <label class="form-label" for="dialler-settings">Settings which should be done in dialler <span aria-hidden="true">*</span></label>
+                <textarea class="form-input" id="dialler-settings" rows="3" placeholder="Specific configuration requests" data-product-key="dialler_server" data-field-name="diallerSettings">${escHtml(pd.diallerSettings || '')}</textarea>
+            </div>`;
+    }
+
+    if (sp.includes('inbound_did')) {
+        const pd = details['inbound_did'] || {};
+        html += `
+            <div class="section-divider col-span-2"><h3>Inbound DID</h3></div>
+            <div class="form-group">
+                <label class="form-label" for="did-numberOfDIDs">Number of DIDs <span aria-hidden="true">*</span></label>
+                <input class="form-input" id="did-numberOfDIDs" type="number" placeholder="e.g., 100" value="${escHtml(pd.numberOfDIDs || '')}" data-product-key="inbound_did" data-field-name="numberOfDIDs" />
+            </div>
+            <div class="form-group">
+                <label class="form-label" for="did-areaCode">Any specific area code?</label>
+                <input class="form-input" id="did-areaCode" type="text" placeholder="Optional" value="${escHtml(pd.specificAreaCodes || '')}" data-product-key="inbound_did" data-field-name="specificAreaCodes" />
+            </div>`;
+    }
+
+    if (sp.includes('toll_free')) {
+        const pd = details['toll_free'] || {};
+        html += `
+            <div class="section-divider col-span-2"><h3>TFN (Toll-Free)</h3></div>
+            <div class="form-group col-span-2">
+                <label class="form-label" for="tfn-quantity">Number of TFN numbers <span aria-hidden="true">*</span></label>
+                <input class="form-input" id="tfn-quantity" type="number" placeholder="e.g., 10" value="${escHtml(pd.tfnQuantity || '')}" data-product-key="toll_free" data-field-name="tfnQuantity" />
+            </div>`;
+    }
+
+    if (sp.includes('ai_bots')) {
+        const pd = details['ai_bots'] || {};
+        html += `
+            <div class="section-divider col-span-2"><h3>AI Bots</h3></div>
+            <div class="form-group">
+                <label class="form-label" for="bots-numberOfBots">Number of AI bots <span aria-hidden="true">*</span></label>
+                <input class="form-input" id="bots-numberOfBots" type="number" placeholder="e.g., 5" value="${escHtml(pd.numberOfBots || '')}" data-product-key="ai_bots" data-field-name="numberOfBots" />
+            </div>
+            <div class="form-group">
+                <label class="form-label" for="bots-campaign">Campaign <span aria-hidden="true">*</span></label>
+                <input class="form-input" id="bots-campaign" type="text" placeholder="Campaign name" value="${escHtml(pd.aiBotCampaign || '')}" data-product-key="ai_bots" data-field-name="aiBotCampaign" />
+            </div>
+            <div class="form-group col-span-2">
+                <label class="form-label" for="bots-script">Any script for the bots?</label>
+                <textarea class="form-input" id="bots-script" rows="3" placeholder="Optional" data-product-key="ai_bots" data-field-name="aiBotScript">${escHtml(pd.aiBotScript || '')}</textarea>
+            </div>`;
+    }
+
+    html += `
         </div>
     </div>`;
+    
+    return html;
 }
 
 function renderStep9Attestation() {
@@ -840,13 +975,14 @@ function renderCurrentStep(animDir) {
     const wrapper = document.getElementById('stepWrapper');
     const stepRenderers = {
         1: renderStep1,
-        2: renderStep2,
+        2: renderStep2Vendor,
         3: renderStep3,
-        4: renderStep5TradeReferences,
-        5: renderStep6Regulatory,
-        6: renderStep7Products,
-        7: renderStep8Technical,
-        8: renderStep9Attestation,
+        4: renderStep4,
+        5: renderStep5TradeReferences,
+        6: renderStep6Regulatory,
+        7: renderStep7Products,
+        8: renderStep8Technical,
+        9: renderStep9Attestation,
     };
     const newContent = stepRenderers[state.currentStep]?.() ?? '';
 
@@ -899,7 +1035,7 @@ function updateButtons() {
     }
 
     // Next/Complete button
-    if (state.currentStep < 8) {
+    if (state.currentStep < 9) {
         btnNext.className = 'btn btn-primary';
         btnNext.innerHTML = `Continue ${ICONS.chevronRight}`;
     } else {
@@ -918,8 +1054,13 @@ function bindStepEvents() {
 
     // Product card toggles
     document.querySelectorAll('.product-card').forEach(card => {
-        card.addEventListener('click', handleProductToggle);
-        card.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleProductToggle.call(card, e); } });
+        if (card.dataset.productId) {
+            card.addEventListener('click', handleProductToggle);
+            card.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleProductToggle.call(card, e); } });
+        } else if (card.dataset.vendorType) {
+            card.addEventListener('click', handleVendorTypeToggle);
+            card.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleVendorTypeToggle.call(card, e); } });
+        }
     });
 
     // Product detail inputs
@@ -1103,35 +1244,55 @@ function validateStep1() {
     return true;
 }
 
+function validateStep2Vendor() {
+    clearFieldErrors();
+    const c = state.formData.company;
+    if (c.vendorType !== 'VoIP Vendor' && c.vendorType !== 'Call Centre') {
+        validationFail('Please select a vendor type.', { radioName: 'vendorType' });
+        return false;
+    }
+    return true;
+}
+
 function validateStep2() {
     clearFieldErrors();
     const c = state.formData.company;
     const req = (v) => String(v ?? '').trim().length > 0;
+    const isCallCentre = c.vendorType === 'Call Centre';
 
+    // Core Call Centre fields
     if (!req(c.companyName)) { validationFail('Legal name of company is required.', 'companyName'); return false; }
     if (!req(c.address)) { validationFail('Physical address is required.', 'address'); return false; }
-    if (!req(c.city)) { validationFail('Physical city is required.', 'city'); return false; }
-    if (!req(c.state)) { validationFail('Physical state is required.', 'state'); return false; }
-    if (!req(c.zipCode)) { validationFail('Physical ZIP is required.', 'zipCode'); return false; }
-    if (!req(c.country)) { validationFail('Country is required.', 'country'); return false; }
-    if (c.businessBasedInUs !== true && c.businessBasedInUs !== false) {
-        validationFail('Please indicate if the company is U.S.-based.', { radioName: 'businessBasedInUs' }); return false;
-    }
-    if (c.businessBasedInUs && !req(c.stateOfIncorporation)) {
-        validationFail('State of incorporation is required for U.S.-based businesses.', 'stateOfIncorporation'); return false;
-    }
-    if (!req(c.corporateType)) { validationFail('Corporate type is required.', 'corporateType'); return false; }
-    if (!req(c.businessLine)) { validationFail('Business line is required.', 'businessLine'); return false; }
-    if (!req(c.feinNumber)) { validationFail('FEIN is required.', 'feinNumber'); return false; }
-    if (!req(c.frnNumber)) { validationFail('FRN is required.', 'frnNumber'); return false; }
-    if (!req(c.mobileNumber)) { validationFail('Mobile number is required.', 'mobileNumber'); return false; }
-    if (!req(c.teamsOrWhatsApp)) { validationFail('Teams ID or WhatsApp is required.', 'teamsOrWhatsApp'); return false; }
-    if (!req(c.filerId499)) { validationFail('499 Filer ID is required.', 'filerId499'); return false; }
-    if (!req(c.businessContactName)) { validationFail('Business contact name is required.', 'businessContactName'); return false; }
-    if (!req(c.businessPhone)) { validationFail('Business phone is required.', 'businessPhone'); return false; }
-    if (!req(c.voipPortalEmail)) { validationFail('VoIP Portal email is required.', 'voipPortalEmail'); return false; }
+    if (!req(c.customerUrl)) { validationFail('Customer URL (Company Website) is required.', 'customerUrl'); return false; }
+    if (!req(c.voipPortalEmail)) { validationFail('VoIP Portal email (Official Email) is required.', 'voipPortalEmail'); return false; }
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(c.voipPortalEmail).trim())) {
         validationFail('VoIP Portal email must be valid.', 'voipPortalEmail'); return false;
+    }
+    if (!req(c.feinNumber)) { validationFail('FEIN is required.', 'feinNumber'); return false; }
+    if (isCallCentre) {
+        if (!req(c.campaign)) { validationFail('Campaign is required.', 'campaign'); return false; }
+        if (!req(c.rmd)) { validationFail('RMD is required.', 'rmd'); return false; }
+    }
+
+    if (!isCallCentre) {
+        if (!req(c.city)) { validationFail('Physical city is required.', 'city'); return false; }
+        if (!req(c.state)) { validationFail('Physical state is required.', 'state'); return false; }
+        if (!req(c.zipCode)) { validationFail('Physical ZIP is required.', 'zipCode'); return false; }
+        if (!req(c.country)) { validationFail('Country is required.', 'country'); return false; }
+        if (c.businessBasedInUs !== true && c.businessBasedInUs !== false) {
+            validationFail('Please indicate if the company is U.S.-based.', { radioName: 'businessBasedInUs' }); return false;
+        }
+        if (c.businessBasedInUs && !req(c.stateOfIncorporation)) {
+            validationFail('State of incorporation is required for U.S.-based businesses.', 'stateOfIncorporation'); return false;
+        }
+        if (!req(c.corporateType)) { validationFail('Corporate type is required.', 'corporateType'); return false; }
+        if (!req(c.businessLine)) { validationFail('Business line is required.', 'businessLine'); return false; }
+        if (!req(c.frnNumber)) { validationFail('FRN is required.', 'frnNumber'); return false; }
+        if (!req(c.mobileNumber)) { validationFail('Mobile number is required.', 'mobileNumber'); return false; }
+        if (!req(c.teamsOrWhatsApp)) { validationFail('Teams ID or WhatsApp is required.', 'teamsOrWhatsApp'); return false; }
+        if (!req(c.filerId499)) { validationFail('499 Filer ID is required.', 'filerId499'); return false; }
+        if (!req(c.businessContactName)) { validationFail('Business contact name is required.', 'businessContactName'); return false; }
+        if (!req(c.businessPhone)) { validationFail('Business phone is required.', 'businessPhone'); return false; }
     }
 
     const optEmails = [
@@ -1169,6 +1330,10 @@ const E164_RE = /^\+[1-9]\d{1,14}$/;
 function validateStep5TradeReferences() {
     clearFieldErrors();
     const rows = state.formData.tradeReferences;
+    if (state.formData.company.vendorType === 'Call Centre') {
+        // Trade references are optional for Call Centre
+        return true;
+    }
     if (!rows.length) {
         validationFail('Add at least one trade reference.', 'tr-0-name');
         return false;
@@ -1192,6 +1357,10 @@ function validateStep5TradeReferences() {
 
 function validateStep6Regulatory() {
     clearFieldErrors();
+    if (state.formData.company.vendorType === 'Call Centre') {
+        // Regulatory is optional for Call Centre
+        return true;
+    }
     const r = state.formData.regulatory;
     const req = (v) => String(v ?? '').trim().length > 0;
     const yn = (v) => v === true || v === false;
@@ -1249,36 +1418,9 @@ function validateStep6Regulatory() {
 function validateStep7Products() {
     clearFieldErrors();
     const sp = state.formData.products.selectedProducts;
-    const det = state.formData.products.details;
     if (!sp.length) {
         validationFail('Select at least one product.', '__products_grid__');
         return false;
-    }
-    const reqNum = (pid, field, label) => {
-        const n = parseInt(det[pid]?.[field], 10);
-        if (!Number.isFinite(n) || n <= 0) {
-            validationFail(`${label} is required for the selected product.`, `${pid}-${field}`);
-            return false;
-        }
-        return true;
-    };
-    const reqStr = (pid, field, label) => {
-        if (!String(det[pid]?.[field] ?? '').trim()) {
-            validationFail(`${label} is required for the selected product.`, `${pid}-${field}`);
-            return false;
-        }
-        return true;
-    };
-    for (const pid of sp) {
-        if (pid === 'voip' && !reqNum(pid, 'numberOfPorts', 'Number of ports')) return false;
-        if (pid === 'dialler_server' && !reqNum(pid, 'numberOfAgents', 'Number of agents')) return false;
-        if (pid === 'inbound_did' && !reqNum(pid, 'numberOfDIDs', 'Number of DIDs')) return false;
-        if (pid === 'toll_free' && !reqNum(pid, 'tfnQuantity', 'TFN quantity')) return false;
-        if (pid === 'ai_bots') {
-            if (!reqNum(pid, 'numberOfBots', 'Number of bots')) return false;
-            if (!reqStr(pid, 'botServerInformation', 'Server information')) return false;
-            if (!reqStr(pid, 'closerDiallerDetails', 'Closer dialler details')) return false;
-        }
     }
     return true;
 }
@@ -1286,27 +1428,74 @@ function validateStep7Products() {
 function validateStep8Technical() {
     clearFieldErrors();
     const t = state.formData.technical;
-    if (t.diallerServerLink && !isHttpUrl(t.diallerServerLink)) {
-        validationFail('Dialler server link must be a valid http(s) URL.', 'diallerLink');
-        return false;
+    const sp = state.formData.products.selectedProducts;
+    const det = state.formData.products.details;
+    
+    // Dynamic logic
+    const hasDiallerServer = sp.includes('dialler_server');
+    const hasVoip = sp.includes('voip');
+    const hasAiBots = sp.includes('ai_bots');
+    const needsThirdPartyDialler = !hasDiallerServer && (hasVoip || hasAiBots);
+
+    if (needsThirdPartyDialler) {
+        if (t.diallerServerLink && !isHttpUrl(t.diallerServerLink)) {
+            validationFail('Dialler server link must be a valid http(s) URL.', 'diallerLink');
+            return false;
+        }
+        if (!isHttpUrl(t.validationLink)) {
+            validationFail('Validation link must be a valid http(s) URL.', 'valLink');
+            return false;
+        }
+        if (!String(t.serverIPs ?? '').trim()) {
+            validationFail('Enter at least one server IP (one per line).', 'serverIps');
+            return false;
+        }
+        if (!String(t.diallerLevel9AccessDetails ?? '').trim()) {
+            validationFail('Dialler level 9 / access details are required.', 'l9access');
+            return false;
+        }
     }
-    if (!isHttpUrl(t.validationLink)) {
-        validationFail('Validation link must be a valid http(s) URL.', 'valLink');
-        return false;
+
+    const reqNum = (pid, field, label) => {
+        const n = parseInt(det[pid]?.[field], 10);
+        if (!Number.isFinite(n) || n <= 0) {
+            validationFail(`${label} is required.`, `${pid}-${field}`);
+            return false;
+        }
+        return true;
+    };
+    const reqStr = (pid, field, label) => {
+        if (!String(det[pid]?.[field] ?? '').trim()) {
+            validationFail(`${label} is required.`, `${pid}-${field}`);
+            return false;
+        }
+        return true;
+    };
+
+    for (const pid of sp) {
+        if (pid === 'voip' && !reqNum(pid, 'numberOfPorts', 'Number of ports')) return false;
+        if (pid === 'dialler_server') {
+            if (!reqNum(pid, 'numberOfAgents', 'Number of agents')) return false;
+            if (!reqNum(pid, 'numberOfCampaigns', 'Number of campaigns')) return false;
+            if (!reqStr(pid, 'diallerSettings', 'Settings which should be done in dialler')) return false;
+        }
+        if (pid === 'inbound_did' && !reqNum(pid, 'numberOfDIDs', 'Number of DIDs')) return false;
+        if (pid === 'toll_free' && !reqNum(pid, 'tfnQuantity', 'TFN quantity')) return false;
+        if (pid === 'ai_bots') {
+            if (!reqNum(pid, 'numberOfBots', 'Number of bots')) return false;
+            if (!reqStr(pid, 'aiBotCampaign', 'Campaign')) return false;
+        }
     }
-    if (!String(t.serverIPs ?? '').trim()) {
-        validationFail('Enter at least one server IP (one per line).', 'serverIps');
-        return false;
-    }
-    if (!String(t.diallerLevel9AccessDetails ?? '').trim()) {
-        validationFail('Dialler level 9 / access details are required.', 'l9access');
-        return false;
-    }
+
     return true;
 }
 
 function validateStep9Attestation() {
     clearFieldErrors();
+    if (state.formData.company.vendorType === 'Call Centre') {
+        // Optional
+        return true;
+    }
     const a = state.formData.attestation;
     if (!String(a.officerName ?? '').trim()) {
         validationFail('Officer name is required.', 'officerName');
@@ -1321,6 +1510,10 @@ function validateStep9Attestation() {
 
 function validateStep3Banking() {
     clearFieldErrors();
+    if (state.formData.company.vendorType === 'Call Centre') {
+        // Banking is optional for Call Centre
+        return true;
+    }
     const bk = state.formData.banking;
     if (bk.hasUsBankAccount !== true && bk.hasUsBankAccount !== false) {
         validationFail('Please indicate whether your company has a U.S. bank account.', { radioName: 'hasUsBankAccount' });
@@ -1414,6 +1607,31 @@ function handleProductToggle(e) {
     }
 }
 
+function handleVendorTypeToggle(e) {
+    const card = e.currentTarget || this;
+    document.querySelector('.products-grid')?.classList.remove(FIELD_INVALID_CLS);
+    const vendorType = card.dataset.vendorType;
+    if (!vendorType) return;
+
+    state.formData.company.vendorType = vendorType;
+
+    // Update UI for all cards in the grid
+    const grid = card.closest('.products-grid');
+    if (grid) {
+        grid.querySelectorAll('.product-card').forEach(c => {
+            const isThis = c.dataset.vendorType === vendorType;
+            c.className = `product-card ${isThis ? 'selected border-blue-600' : ''}`;
+            c.setAttribute('aria-pressed', isThis);
+            
+            const check = c.querySelector('.product-check');
+            if (check) check.className = `product-check ${isThis ? 'checked' : ''}`;
+            
+            const radio = c.querySelector('input[type="radio"]');
+            if (radio) radio.checked = isThis;
+        });
+    }
+}
+
 function handleProductDetailChange(e) {
     const input = e.target;
     stripFieldInvalid(input);
@@ -1436,19 +1654,21 @@ async function goNext() {
         const registered = await ensureUserRegistered();
         if (!registered) return;
     } else if (state.currentStep === 2) {
-        if (!validateStep2()) return;
+        if (!validateStep2Vendor()) return;
     } else if (state.currentStep === 3) {
-        if (!validateStep3Banking()) return;
+        if (!validateStep2()) return;
     } else if (state.currentStep === 4) {
-        if (!validateStep5TradeReferences()) return;
+        if (!validateStep3Banking()) return;
     } else if (state.currentStep === 5) {
-        if (!validateStep6Regulatory()) return;
+        if (!validateStep5TradeReferences()) return;
     } else if (state.currentStep === 6) {
-        if (!validateStep7Products()) return;
+        if (!validateStep6Regulatory()) return;
     } else if (state.currentStep === 7) {
+        if (!validateStep7Products()) return;
+    } else if (state.currentStep === 8) {
         if (!validateStep8Technical()) return;
     }
-    if (state.currentStep < 8) {
+    if (state.currentStep < 9) {
         state.direction = 1;
         state.currentStep++;
         update(1);
@@ -1518,6 +1738,9 @@ async function handleSubmit() {
             complianceEmail: fd.company.complianceEmail || null,
             fraudReportEmail: fd.company.fraudReportEmail || null,
             skypeId: fd.company.skypeId || null,
+            vendorType: fd.company.vendorType || null,
+            campaign: fd.company.campaign || null,
+            rmd: fd.company.rmd || null,
         },
         companyBanking: {
             hasUsBankAccount: fd.banking.hasUsBankAccount === true,
@@ -1535,15 +1758,23 @@ async function handleSubmit() {
                 productType: mapProductType(pid),
                 numberOfPorts: null,
                 numberOfAgents: null,
+                numberOfCampaigns: null,
+                diallerSettings: null,
                 numberOfDIDs: null,
                 specificAreaCodes: null,
                 tfnQuantity: null,
                 numberOfBots: null,
                 botServerInformation: null,
                 closerDiallerDetails: null,
+                aiBotCampaign: null,
+                aiBotScript: null,
             };
             if (pid === 'voip') sel.numberOfPorts = parseInt(d.numberOfPorts, 10) || null;
-            if (pid === 'dialler_server') sel.numberOfAgents = parseInt(d.numberOfAgents, 10) || null;
+            if (pid === 'dialler_server') {
+                sel.numberOfAgents = parseInt(d.numberOfAgents, 10) || null;
+                sel.numberOfCampaigns = parseInt(d.numberOfCampaigns, 10) || null;
+                sel.diallerSettings = d.diallerSettings || null;
+            }
             if (pid === 'inbound_did') {
                 sel.numberOfDIDs = parseInt(d.numberOfDIDs, 10) || null;
                 sel.specificAreaCodes = d.specificAreaCodes || null;
@@ -1553,6 +1784,8 @@ async function handleSubmit() {
                 sel.numberOfBots = parseInt(d.numberOfBots, 10) || null;
                 sel.botServerInformation = d.botServerInformation || null;
                 sel.closerDiallerDetails = d.closerDiallerDetails || null;
+                sel.aiBotCampaign = d.aiBotCampaign || null;
+                sel.aiBotScript = d.aiBotScript || null;
             }
             return sel;
         }),
